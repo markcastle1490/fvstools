@@ -522,50 +522,39 @@ fvs_keyword <- function(params = list(),
   }
   
   #Handle Parms keyword formatting
-  else if (type == 2)
+  else if (type == 2 && length(char_params) >= 3)
   {
-    #Create keyword record in PARMS format if char_params carries at least 3 
-    #values.
-    if(length(char_params) >= 3)
-    {
-      #Create the Parm() component of keyword
-      parms <- paste0("Parms",
-                      "(",
-                      paste0(char_params[3:length(char_params)],
-                             collapse = ","),
-                      ")")
-      
-      #Create the keyword
-      keyword <- paste0(format(char_params[1], width = 10, justify = "left"),
-                        format(char_params[2], width = 10, justify = "left"),
-                        parms)
-    }
+    #Create the Parm() component of keyword
+    parms <- paste0("Parms",
+                    "(",
+                    paste0(char_params[3:length(char_params)],
+                           collapse = ","),
+                    ")")
+    
+    #Create the keyword
+    keyword <- paste0(format(char_params[1], width = 10, justify = "left"),
+                      format(char_params[2], width = 10, justify = "left"),
+                      parms)
   }
   
   #Handle event monitor function
-  else if(type == 3)
+  else if(type == 3 && length(char_params) >= 3)
   {
+    #Create string with variable and function call name
+    event_var <- paste0(char_params[1], "=", char_params[2])
     
-    #Create event monitor function call statement if char_params carries at
-    #least 3 values.
-    if(length(char_params) >= 3) 
-    {
-      #Create string with variable and function call name
-      event_var <- paste0(char_params[1], "=", char_params[2])
-      
-      #Create function arguments with parantheses
-      function_args <- paste0("(",
-                             paste0(char_params[3:length(char_params)],
-                                    collapse = ","),
-                             ")")
-      
-      #Create the keyword (function call here)
-      keyword <- paste0(event_var, function_args)
-    }
+    #Create function arguments with parentheses
+    function_args <- paste0("(",
+                            paste0(char_params[3:length(char_params)],
+                                   collapse = ","),
+                            ")")
+    
+    #Create the keyword (function call here)
+    keyword <- paste0(event_var, function_args)
   }
   
   #Handle freeform option
-  else
+  else if(type == 4)
   {
     #Paste char_params separated by space and return
     keyword <- paste(char_params, collapse = " ")
