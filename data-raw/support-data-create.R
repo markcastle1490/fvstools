@@ -25,7 +25,7 @@ fvs_bin = "/FVS/FVSSoftware/FVSbin"
 #===============================================================================
 
 #Read in FIA REF_SPECIES.csv
-support_sp <- read.csv(paste0(read_dir, "/", "REF_SPECIES.csv"))[
+support_sp <- read.csv(file.path(read_dir, "REF_SPECIES.csv"))[
   c("SPCD", "COMMON_NAME", 
     "GENUS", "SPECIES", 
     "VARIETY", "SUBSPECIES",
@@ -64,7 +64,7 @@ support_sp <- support_sp[support_sp$SPCD < 1000, ]
 # support_sp$WOODLAND <- paste0('\"',support_sp$WOODLAND,'\"',",")
 
 write.csv(support_sp,
-          file= paste0(write_dir, "/", "support_sp.csv"),
+          file= file.path(write_dir, "support_sp.csv"),
           row.names = F)
 
 #===============================================================================
@@ -163,7 +163,7 @@ state_codes <- data.frame(STATE_NAME = c("ALABAMA",                        "ALAS
                                           "VI"))
 
 write.csv(state_codes,
-          file= paste0(write_dir, "/", "state_codes.csv"),
+          file= file.path(write_dir, "state_codes.csv"),
           row.names = F)
 
 #===============================================================================
@@ -171,13 +171,13 @@ write.csv(state_codes,
 #===============================================================================
 
 #Read in FIA REF_FOREST_TYPE.csv
-fortyp_codes <- read.csv(paste0(read_dir, "/", "REF_FOREST_TYPE.csv"))
+fortyp_codes <- read.csv(file.path(read_dir, "REF_FOREST_TYPE.csv"))
 
 #Order and fortyp_codes
 fortyp_codes <- fortyp_codes[order(fortyp_codes$VALUE),]
 
 write.csv(fortyp_codes,
-          file = paste0(write_dir, "/", "fortyp_codes.csv"),
+          file = file.path(write_dir, "fortyp_codes.csv"),
           row.names = F)
 
 #===============================================================================
@@ -224,7 +224,7 @@ for(i in 1:length(vars))
 var_data <- do.call("rbind", var_list); rm(var_list)
 
 #Write csv
-write.csv(file = paste0(write_dir, "/", "fvs_species.csv"),
+write.csv(file = file.path(write_dir, "fvs_species.csv"),
           x = var_data,
           row.names = FALSE)
 

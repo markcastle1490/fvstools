@@ -54,7 +54,10 @@
 #' @param dbin
 #' Character string for name of FVS input database that includes file extension 
 #' (.db, .sqlite). If this value is not NULL, the function will attempt to add a 
-#' DSNIN keyword sequence. Defaults to NULL.
+#' DSNIN keyword sequence for reading stand and tree data. Defaults to NULL. 
+#' 
+#' Note: This argument should not be used if DATASCRN keyword is included in 
+#' keywords or stand_keys arguments.
 #' 
 #' @param standinit
 #' Character string corresponding to name table where stand information will be 
@@ -231,7 +234,7 @@ fvs_keyfile <- function(keyfile,
     
     #Create keyword file path and create unique output database if needed
     if(!create_batch)
-      key_path <- paste0(keydir, "/", key_name)
+      key_path <- file.path(keydir, key_name)
   
     else
     {
@@ -239,7 +242,7 @@ fvs_keyfile <- function(keyfile,
                       replacement = paste0("_BATCH", i, ".key"),
                       x = key_name)
       
-      key_path <- paste0(keydir, "/", key_name_)
+      key_path <- file.path(keydir, key_name_)
     }
     
     #If key_path exists already,  delete it
