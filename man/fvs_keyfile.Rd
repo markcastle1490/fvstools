@@ -94,7 +94,7 @@ Defaults to 1.}
 If this value is not NULL, the function will attempt to add a DSNOUT keyword
 sequence. Defaults to NULL.}
 
-\item{delotab}{Optional vector of integer values that contain any values from 1-4. If values
+\item{delotab}{Optional vector of numeric values that contain any values from 1-4. If values
 are provided in this argument, then DELOTAB keywords will be included in
 keyword file to suppress creation of text outputs. By default this argument is
 set to c(1, 2) so the stand composition table and sample tree data tables will
@@ -124,6 +124,6 @@ FALSE. Defaults to NULL.}
 None
 }
 \description{
-This function creates a keyword file based on user defined set of keywords for
-a set of stands IDs and inventory years.
+This function creates a keyword file based on user defined set
+of keywords for a set of stands IDs and inventory years.
 }

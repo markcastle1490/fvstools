@@ -1,8 +1,8 @@
 ################################################################################
 #' @name fvs_keyfile
 #' @title Generate FVS Keyword Files and Batches
-#' @description This function creates a keyword file based on user defined set of keywords for 
-#' a set of stands IDs and inventory years.
+#' @description This function creates a keyword file based on user defined set 
+#' of keywords for a set of stands IDs and inventory years.
 #' 
 #' @param keyfile
 #' Character string corresponding to directory path and file name of keyword file 
@@ -86,7 +86,7 @@
 #' sequence. Defaults to NULL.
 #' 
 #' @param delotab
-#' Optional vector of integer values that contain any values from 1-4. If values 
+#' Optional vector of numeric values that contain any values from 1-4. If values 
 #' are provided in this argument, then DELOTAB keywords will be included in 
 #' keyword file to suppress creation of text outputs. By default this argument is 
 #' set to c(1, 2) so the stand composition table and sample tree data tables will 
@@ -146,24 +146,24 @@ fvs_keyfile <- function(keyfile,
   #Switch \\\\ to / in keyfile
   keyfile <- chartr("\\", "/", keyfile)
   
-  #Extract path to output by extract all characters before the last / in output.
-  keydir <- gsub("/[^/]+$", "", keyfile)
+  #Extract path to file
+  keydir <- dirname(keyfile)
   
   #Extract name of keyword file
-  key_name <- gsub(".*/", "", keyfile)
+  key_name <- basename(keyfile)
   
   #Extract file extension for output argument.
   key_ext <- tools::file_ext(keyfile)
   
   #Test existence of output path and assign working directory to keydir if 
   #needed
-  if(keydir != key_name)
-  {
-    if (!(file.exists(keydir)))
-      stop(paste("Path to output:", keydir, "was not found.",
-                 "Make sure directory path to output is spelled correctly."))
+  if (keydir == ".") {
+    keydir <- getwd()
+  } 
+  else if (!file.exists(keydir)) {
+    stop(paste("Path to output:", keydir, "was not found.",
+               "Make sure directory path to output is spelled correctly."))
   }
-  else keydir <- getwd()
 
   #Test if output file extension is valid (.key).
   if(key_ext != "key")
@@ -194,16 +194,14 @@ fvs_keyfile <- function(keyfile,
       stop("keywords argument must be a character vector.")
   }
   
-  #Do checks on stand_keys
+  #Fill in stand_keys if NULL
   if(is.null(stand_keys)) stand_keys = rep("", times = length(standid))
-  else
-  {
-    if(length(stand_keys) != length(standid))
-      stop("Arguments stand_keys and standid need to have the same length.")
-    
-    if(!is.character(stand_keys))
-      stop("stand_keys argument must be a character vector.")
-  }
+  
+  #Check length of stand_keys and type
+  if(length(stand_keys) != length(standid))
+    stop("Arguments stand_keys and standid need to have the same length.")
+  if(!is.character(stand_keys))
+    stop("stand_keys argument must be a character vector.")
   
   #Capture bad nstands values
   if(is.na(nstands) || nstands <= 0) nstands <- 10000
@@ -300,6 +298,21 @@ fvs_keyfile <- function(keyfile,
       }
       
       #=========================================================================
+      #Determine if input database keywords will be produced and added to keyword
+      #file
+      #=========================================================================
+      
+      if(!is.null(dbin))
+      {
+        dsnin_keys <- dsnin_keys(dbin = dbin,
+                                 stand_type = stand_type,
+                                 standinit = standinit,
+                                 treeinit = treeinit)
+        
+        writeLines(text = dsnin_keys, con = con, sep = "\n\n")
+      }
+      
+      #=========================================================================
       #Determine if timing keywords are produced and added to keyword file
       #=========================================================================
       
@@ -337,23 +350,8 @@ fvs_keyfile <- function(keyfile,
       #=========================================================================
       
       stand_key = stand_keys[stand_count]
-      if(!is.na(stand_key) && !is.null(stand_key) && stand_key != "") 
+      if(!is.na(stand_key) && stand_key != "") 
         writeLines(text = stand_key, con = con, sep = "\n\n")
-      
-      #=========================================================================
-      #Determine if input database keywords will be produced and added to keyword
-      #file
-      #=========================================================================
-      
-      if(!is.null(dbin))
-      {
-        dsnin_keys <- dsnin_keys(dbin = dbin,
-                                 stand_type = stand_type,
-                                 standinit = standinit,
-                                 treeinit = treeinit)
-        
-        writeLines(text = dsnin_keys, con = con, sep = "\n\n")
-      }
       
       #Add process keyword
       writeLines(text = "PROCESS", con = con, sep = "\n\n")
@@ -399,7 +397,7 @@ fvs_kcpfile <- function(kcpfile,
   if(file.exists(kcpfile)) unlink(kcpfile)
   
   #Extract path to output by extract all characters before the last / in output.
-  keydir <- gsub("/[^/]+$", "", kcpfile)
+  keydir <- dirname(kcpfile)
   
   #Test existence of output path and if it does not exist report error.
   if (!(file.exists(keydir))){
@@ -497,36 +495,17 @@ fvs_keyword <- function(params = list(),
   #Check for valid type
   if(!type %in% c(1, 2, 3, 4)) type <- 1
   
-  #Initialize empty character vector
-  char_params <- vector(mode = "character",
-                        length = 0)
-  
-  #Cast all values in params to character
-  for(i in 1:length(params))
-  {
-    #If params is NA move to next value
-    if(is.na(params[i])) next
-    
-    #Store value as character
-    char_val <- as.character(params[[i]])
-    
-    #If type is not 4 (freeform), grab substring
-    if(type != 4)
-    {
-      char_val <- substring(char_val,
-                            first = 1,
-                            last = 10)
-    }
-    
-    #Trim white space
-    char_val <- trimws(char_val)
-    
-    #If field is just a blank character, move to next value
-    #if(char_val == "") next
-    
-    #Add value to char_params
-    char_params <- append(char_params, char_val)
+  #Drop NAs and convert to character vector
+  flat_params <- unlist(params)
+  char_params <- as.character(flat_params[!is.na(flat_params)])
+
+  #Enforce length limit if type isn't 4
+  if (type != 4) {
+  char_params <- substring(char_params, 1, 10)
   }
+
+  #Clean up whitespace
+  char_params <- trimws(char_params)
   
   #If length of char_params is still 0, return
   if(length(char_params) <= 0) return(keyword)
@@ -557,14 +536,9 @@ fvs_keyword <- function(params = list(),
                       ")")
       
       #Create the keyword
-      keyword <- paste0(format(char_params[1],
-                               width = 10,
-                               justify = "left"),
-                        format(char_params[2],
-                               width = 10,
-                               justify = "left"),
-                        parms,
-                        collapse = "")
+      keyword <- paste0(format(char_params[1], width = 10, justify = "left"),
+                        format(char_params[2], width = 10, justify = "left"),
+                        parms)
     }
   }
   
@@ -577,9 +551,7 @@ fvs_keyword <- function(params = list(),
     if(length(char_params) >= 3) 
     {
       #Create string with variable and function call name
-      event_var <- paste0(char_params[1],
-                          "=",
-                          char_params[2])
+      event_var <- paste0(char_params[1], "=", char_params[2])
       
       #Create function arguments with parantheses
       function_args <- paste0("(",
@@ -588,9 +560,7 @@ fvs_keyword <- function(params = list(),
                              ")")
       
       #Create the keyword (function call here)
-      keyword <- paste0(event_var,
-                        function_args,
-                        collapse = "")
+      keyword <- paste0(event_var, function_args)
     }
   }
   
@@ -598,8 +568,7 @@ fvs_keyword <- function(params = list(),
   else
   {
     #Paste char_params separated by space and return
-    keyword <- paste(char_params,
-                     collapse = " ")
+    keyword <- paste(char_params, collapse = " ")
   }
   
   return(keyword)
@@ -608,9 +577,9 @@ fvs_keyword <- function(params = list(),
 ################################################################################
 #' @name time_keys
 #' @title Generate FVS Simulation Time Control Keywords
-#' @description This function creates a set of keywords for controlling the length of a FVS 
-#' simulation for a given inventory year, common start year, common end year, 
-#' default cycle length, and optional cycle_at keywords.
+#' @description This function creates a set of keywords for controlling the 
+#' length of a FVS simulation for a given inventory year, common start year, 
+#' common end year, default cycle length, and optional cycle_at keywords.
 #' 
 #' @param invyear
 #' Inventory year of stand. Defaults to NULL.

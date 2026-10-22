@@ -75,14 +75,13 @@ run_key = function(dll_path = "C:/FVS/FVSSoftware/FVSbin",
   var_code <- paste0("FVS", var_code)
   
   #Grab the the directory where the keyword file is stored
-  keydir <- gsub("/[^/]+$", "", keyfile)
+  keydir <- dirname(keyfile)
   
   #Get the name of the keyword file
-  keyfile_ <- sub(".*/", "", keyfile)
+  keyfile_ <- basename(keyfile)
   
   #Set working directory for the simulation
-  if(keydir != keyfile_)
-    setwd(keydir)
+  setwd(keydir)
   
   #Print inputs
   if(verbose)
@@ -273,14 +272,13 @@ run_key_callr = function(dll_path = "C:/FVS/FVSSoftware/FVSbin",
   var_code = paste0("FVS", var_code)
   
   #Grab the the directory where the keyword file is stored
-  keydir = gsub("/[^/]+$", "", keyfile)
+  keydir <- dirname(keyfile)
   
   #Get the name of the keyword file
-  keyfile_ = sub(".*/", "", keyfile)
+  keyfile_ <- basename(keyfile)
   
   #Set working directory for the simulation
-  if(keydir != keyfile_)
-    setwd(keydir)
+  setwd(keydir)
   
   #Print inputs
   if(verbose)

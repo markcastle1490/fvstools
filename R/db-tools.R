@@ -662,7 +662,7 @@ db_compile <- function(dbin = NULL,
     stop("One or more files in dbin does not exist.")
 
   #Test if dbout file path is valid.
-  outpath <- gsub("/[^/]+$", "", dbout)
+  outpath <- dirname(dbout)
   if (outpath != dbout && !(file.exists(outpath))){
     stop(paste("Path to output:", outpath, "was not found.",
                "Make sure directory path to output is spelled correctly."))
