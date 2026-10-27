@@ -443,9 +443,9 @@ fvs_kcpfile <- function(kcpfile,
 ################################################################################
 #' @name fvs_keyword
 #' @title Format FVS Keyword and Event Monitor Strings
-#' @description This function takes in a list of keyword parameters and returns a properly 
-#' formatted keyword string. This function can accommodate standard keyword 
-#' formatting and the Parms format.
+#' @description This function takes in a list of keyword parameters and returns
+#' a properly formatted keyword string. This function can accommodate standard 
+#' keyword formatting and the Parms format.
 #' 
 #' @param params
 #' List containing FVS keyword or event monitor function parameters. The list 
@@ -615,11 +615,9 @@ time_keys <- function(invyear = NULL,
 {
   time_keys_ <- ""
   
-  #If any required inputs are NULL, return
-  if(null_vector(invyear, start_year, end_year, cycle_length)) return(time_keys_)
-  
-  #if any required inputs are NA values, return
-  if(any(is.na(c(invyear, start_year, end_year, cycle_length)))) return(time_keys_)
+  #If any required inputs are NULL or NA, return
+  if(null_vector(invyear, start_year, end_year, cycle_length) ||
+     na_vector(invyear, start_year, end_year, cycle_length)) return(time_keys_)
   
   #If start_year is greater than or equal to end_year, then set end_year to 
   #start_year + 1 default cycle length
@@ -634,11 +632,17 @@ time_keys <- function(invyear = NULL,
   #Catch bad max cycles values
   if(is.na(max_cycles) || max_cycles <= 0) max_cycles <- 40
   
-  #Obtain vector of sorted years
-  years <- sort(c(seq(from = invyear, to = start_year, by = cycle_length),
-               seq(from = start_year, to = end_year, by = cycle_length),
-               end_year,
-               cycle_at))
+  #Obtain years from start year to end year of simulation and cycle at values
+  to_end <- sort(unique(c(seq(from = start_year, to = end_year, by = cycle_length),
+                        end_year,
+                        cycle_at)))
+  
+  #Filter years to ensure they sit strictly within our valid simulation bounds
+  to_end <- to_end[to_end >= invyear & to_end <= end_year]
+  
+  #Now get get years from inventory year to first value in to_end
+  years <- union(seq(from = invyear, to = to_end[1], by = cycle_length),
+                 to_end)
   
   #Do debug if requested.
   if(verbose)
@@ -670,10 +674,6 @@ time_keys <- function(invyear = NULL,
   {
     year1 <- years[i]
     year2 <- years[i + 1]
-    
-    if(year1 < invyear) next
-    if(year2 > end_year) next
-    if(year1 == year2) next
     
     #Calculate difference between years
     dif <- (year2 - year1) %% cycle_length
@@ -931,4 +931,119 @@ open_keys <- function(file = "FVS_Addfile.kcp",
                    sep = "\n")
   
   return(open_key)
+}
+
+################################################################################
+#' valid_vectors
+#' 
+#' @name valid_vectors
+#' 
+#' @description
+#' This function takes a set of vectors and checks if any are NULL or if they 
+#' have unequal lengths. 
+#' 
+#' @param ... 
+#' A set of vectors to be evaluated.
+#' 
+#' @return 
+#' A logical value: `TRUE` if any vector is NULL or lengths are unequal; 
+#' `FALSE` otherwise.
+################################################################################
+
+valid_vectors = function(...)
+{
+  if(null_vector(...)) return(FALSE)
+  if(unequal_vector(...)) return(FALSE)
+  return(TRUE)
+}
+
+################################################################################
+#' null_vector
+#' @name null_vector
+#' 
+#' @description
+#' This function takes a set of vectors and checks if any are NULL.
+#' 
+#' @param ... 
+#' A set of vectors to be evaluated.
+#' 
+#' @return 
+#' A logical value: `TRUE` if any vector is NULL, `FALSE` otherwise.
+################################################################################
+
+null_vector = function(...)
+{
+  #Determine value of null vector
+  null_vector_ <- any(sapply(list(...), is.null, USE.NAMES = FALSE))
+  
+  return(null_vector_)
+}
+
+################################################################################
+#' unequal_vector
+#' @name unequal_vector
+#' @description
+#' 
+#' This function takes in a set of vectors and checks if they are the same 
+#' length. If any of the vectors are not the same length then a TRUE value is
+#' returned. This a helper function that is used inside many of functions in 
+#' this file. 
+#
+#' @param ...
+#' The ... should be a set of vectors that will be checked if any are of unequal
+#' length.
+#
+#' @return
+#' Logical TRUE or FALSE value.
+################################################################################
+
+unequal_vector = function(...)
+{
+  #Initialize value that will be returned if any vectors is NULL. This starts 
+  #off as FALSE until proven otherwise.
+  unequal_vector_ <- FALSE
+  
+  #Get the vectors
+  vectors <- list(...)
+  
+  #Loop through vectors and check if any are not equal to the length of the
+  #first vector.
+  if(length(vectors) > 0)
+  {
+    #Get length of first vector
+    vector_length <- length(vectors[[1]])
+    
+    for(i in 1:length(vectors))
+    {
+      if(length(vectors[[i]]) != vector_length)
+      {
+        unequal_vector_ <- TRUE
+        break
+      }
+    }
+  }
+  
+  return(unequal_vector_)
+}
+
+################################################################################
+#' na_vector
+#' @name na_vector
+#' 
+#' @description
+#' This function takes a set of vectors and checks if any contain NA values.
+#' 
+#' @param ... 
+#' A set of vectors to be evaluated.
+#' 
+#' @return 
+#' A logical value: `TRUE` if any vector contains an NA, `FALSE` otherwise.
+################################################################################
+
+na_vector = function(...)
+{
+  # Determine if any vector contains an NA value
+  na_vector_ <- any(sapply(list(...), function(x) any(is.na(x)), USE.NAMES = FALSE))
+  
+  return(na_vector_)
 }
