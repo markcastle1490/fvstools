@@ -67,7 +67,10 @@ arguments). Only used when start_year and end_year are not NULL. Defaults to NUL
 
 \item{dbin}{Character string for name of FVS input database that includes file extension
 (.db, .sqlite). If this value is not NULL, the function will attempt to add a
-DSNIN keyword sequence. Defaults to NULL.}
+DSNIN keyword sequence for reading stand and tree data. Defaults to NULL.
+
+Note: This argument should not be used if DATASCRN keyword is included in
+keywords or stand_keys arguments.}
 
 \item{standinit}{Character string corresponding to name table where stand information will be
 read from. Typically this would be "FVS_standinit" of "FVS_PlotInit" but could

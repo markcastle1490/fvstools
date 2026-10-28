@@ -40,99 +40,6 @@
 ################################################################################
 
 ################################################################################
-#' valid_vectors
-#' 
-#' @name valid_vectors
-#' 
-#' @description
-#' This function takes a set of vectors and checks if any are NULL or if they 
-#' have unequal lengths. 
-#' 
-#' @param ... 
-#' A set of vectors to be evaluated.
-#' 
-#' @return 
-#' A logical value: `TRUE` if any vector is NULL or lengths are unequal; 
-#' `FALSE` otherwise.
-################################################################################
-
-valid_vectors = function(...)
-{
-  if(null_vector(...)) return(FALSE)
-  if(unequal_vector(...)) return(FALSE)
-  return(TRUE)
-}
-
-################################################################################
-#' null_vector
-#' @name null_vector
-#' 
-#' @description
-#' This function takes a set of vectors and checks if any are NULL.
-#' 
-#' @param ... 
-#' A set of vectors to be evaluated.
-#' 
-#' @return 
-#' A logical value: `TRUE` if any vector is NULL, `FALSE` otherwise.
-################################################################################
-
-null_vector = function(...)
-{
-  #Determine value of null vector
-  null_vector_ <- any(sapply(list(...), is.null, USE.NAMES = FALSE))
-  
-  return(null_vector_)
-}
-
-################################################################################
-#' unequal_vector
-#' @name unequal_vector
-#' @description
-#' 
-#' This function takes in a set of vectors and checks if they are the same 
-#' length. If any of the vectors are not the same length then a TRUE value is
-#' returned. This a helper function that is used inside many of functions in 
-#' this file. 
-#
-#' @param ...
-#' The ... should be a set of vectors that will be checked if any are of unequal
-#' length.
-#
-#' @return
-#' Logical TRUE or FALSE value.
-################################################################################
-
-unequal_vector = function(...)
-{
-  #Initialize value that will be returned if any vectors is NULL. This starts 
-  #off as FALSE until proven otherwise.
-  unequal_vector_ <- FALSE
-  
-  #Get the vectors
-  vectors <- list(...)
-  
-  #Loop through vectors and check if any are not equal to the length of the
-  #first vector.
-  if(length(vectors) > 0)
-  {
-    #Get length of first vector
-    vector_length <- length(vectors[[1]])
-    
-    for(i in 1:length(vectors))
-    {
-      if(length(vectors[[i]]) != vector_length)
-      {
-        unequal_vector_ <- TRUE
-        break
-      }
-    }
-  }
-  
-  return(unequal_vector_)
-}
-
-################################################################################
 #' ba
 #' @name ba
 #' @description
@@ -526,9 +433,10 @@ top_dia = function(dbh,
   
   #Validate top_per. If top_per is not null but has an invalid value, set it to 
   #0.
-  if(!is.null(top_per)) 
-  {
-    if(top_per < 0 || top_per > 100) top_per <- 20
+  if(is.null(top_per)) {
+    top_per <- 0
+  } else if(top_per < 0 || top_per > 100) {
+    top_per <- 20
   }
   
   #Validate dia_type
@@ -540,10 +448,15 @@ top_dia = function(dbh,
   #Do calculations if tpa is > 0
   if(tpa_ > 0)
   {
-    #Determine amount TPA value that will be included in top height calculation
-    top <- top_tpa
+    # Determine target top TPA
+    if (top_per > 0) {
+      top <- tpa_ * (top_per / 100)
+    } else {
+      top <- top_tpa
+    }
+    
+    # Constrain target top TPA to not exceed total stand TPA
     if(top > tpa_) top <- tpa_
-    if(!is.null(top_per))top <- tpa_ * (top_per/100)
     
     #Get order of DBH values in descending order
     dbh_order <- order(-dbh)
@@ -1021,7 +934,7 @@ correct_cc = function(cc = 0)
 {
   cor_cc <- 0
   
-  if(!null_vector(cc))
+  if(!is.null(cc) && length(cc) > 0)
     cor_cc <- 100 * (1 - exp ( - 0.01* cc))
   
   #Capture bad values
@@ -1229,7 +1142,11 @@ top_ht = function(dbh,
   
   #Validate top_per. If top_per is not null but has an invalid value, set it to 
   #20%.
-  if(!is.null(top_per) && (top_per < 0 || top_per > 100)) top_per <- 20
+  if(is.null(top_per)) {
+    top_per <- 0
+  } else if(top_per < 0 || top_per > 100) {
+    top_per <- 20
+  }
   
   #Calculate TPA for the entire stand
   tpa_ <- sum(expf, na.rm = TRUE)
@@ -1237,10 +1154,15 @@ top_ht = function(dbh,
   #Do calculations if tpa > 0
   if(tpa_ > 0)
   {
-    #Determine amount TPA value that will be included in top height calculation
-    top <- top_tpa
+    #Determine target top TPA. 
+    if (top_per > 0) {
+      top <- tpa_ * (top_per / 100)
+    } else {
+      top <- top_tpa
+    }
+    
+    # Constrain target top TPA to not exceed total stand TPA
     if(top > tpa_) top <- tpa_
-    if(!is.null(top_per)) top <- tpa_ * (top_per/100)
     
     #Get order of DBH values in descending order
     dbh_order <- order(-dbh)
@@ -1360,7 +1282,7 @@ mean_attr = function(attr,
   
   #Assign weight of 1 if NULL or not equal to attr
   if(is.null(weight) || length(weight) != ntree) 
-    weight <- numeric(ntree)
+    weight <- rep(1.0, ntree)
   
   #Get species to include in calculations
   if(!is.null(select_species) && !is.null(species))

@@ -44,7 +44,7 @@ Character string corresponding to properly formatted keyword or event monitor
 function.
 }
 \description{
-This function takes in a list of keyword parameters and returns a properly
-formatted keyword string. This function can accommodate standard keyword
-formatting and the Parms format.
+This function takes in a list of keyword parameters and returns
+a properly formatted keyword string. This function can accommodate standard
+keyword formatting and the Parms format.
 }

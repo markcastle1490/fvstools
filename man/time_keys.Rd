@@ -39,7 +39,7 @@ for a given inventory year, common start year, common end year, default cycle
 length, and additional reporting years.
 }
 \description{
-This function creates a set of keywords for controlling the length of a FVS
-simulation for a given inventory year, common start year, common end year,
-default cycle length, and optional cycle_at keywords.
+This function creates a set of keywords for controlling the
+length of a FVS simulation for a given inventory year, common start year,
+common end year, default cycle length, and optional cycle_at keywords.
 }
