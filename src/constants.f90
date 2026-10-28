@@ -1,7 +1,7 @@
 module constants
 !
 !This file contains constants that are used for the FORTRAN 
-!implementation of plot-variable-functions.R in the fvstools package.
+!implementation of stand-attribute-functions.R in the fvstools package.
 !
     use iso_fortran_env, only: real64
     implicit none

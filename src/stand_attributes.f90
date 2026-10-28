@@ -256,8 +256,7 @@ top_exceed = .false.
 
 !Do checks on top_tpa and top_per
 if(top_tpa < 0.0_real64) top_tpa = 40.0_real64
-if(top_per > 100.0_real64) top_per = 20.0_real64
-if(top_per < 0.0_real64) top_per = 0.0_real64
+if (top_per < 0.0_real64 .or. top_per > 100.0_real64) top_per = 20.0_real64
 
 !Calculate TPA for stand
 do i = 1, ntree, 1
@@ -544,13 +543,13 @@ end subroutine lorey_ht
 !user defined size ranges and for select species.
 !###############################################################################
 
-subroutine top_ht(dbh, sorted_idx, expf, ht, top_tpa, top_per, ntree, top_ht_)
+subroutine top_ht(sorted_idx, expf, ht, top_tpa, top_per, ntree, top_ht_)
 use constants
 implicit none
 
 !Arguments
 integer, intent(in) :: ntree, sorted_idx(ntree)
-real(real64), intent(in) :: dbh(ntree), expf(ntree), ht(ntree)
+real(real64), intent(in) :: expf(ntree), ht(ntree)
 real(real64), intent(inout) :: top_tpa, top_per
 real(real64), intent(out) :: top_ht_
 real(real64) :: expf_, ht_, tpa_, top, tpa_sum, ht_sum, expf_temp
@@ -566,8 +565,7 @@ top_exceed = .false.
 
 !Do checks on top_tpa and top_per
 if(top_tpa < 0.0_real64) top_tpa = 40.0_real64
-if (top_per > 100.0_real64) top_per = 20.0_real64
-if (top_per < 0.0_real64) top_per = 0.0_real64
+if (top_per < 0.0_real64 .or. top_per > 100.0_real64) top_per = 20.0_real64
 
 !Calculate tpa of stand
 do i = 1, ntree, 1
@@ -642,7 +640,7 @@ ba_tree = 0.0_real64
 !Branch to determine calculation method
 select case(no_ties)
 
-! Handle ties in DBH values (Trees with identical DBH get identical BAL)
+! Handle ties in DBH values (Trees with same DBH get same BAL)
 case(0) 
     do i = 1, ntree, 1
         idx = sorted_idx(i)
@@ -661,7 +659,7 @@ case(0)
         end if     
     end do    
 
-! Ignore ties (Standard sequential cumulative sum)
+! Ignore ties (all trees get different BAL)
 case default 
     do i = 1, ntree, 1
         idx = sorted_idx(i)
@@ -823,49 +821,36 @@ real(real64), intent(in) :: dbh(ntree), ht(ntree), attr(ntree)
 real(real64), intent(in) :: dbhmin, dbhmax, htmin, htmax
 real(real64), intent(out) :: min_attr_
 real(real64) :: dbh_, attr_, ht_
-integer :: i, species_, idx
+integer :: i, species_
+logical :: first_match
 
 !Initialize variables
-idx = 0
 min_attr_ = 0.0_real64
+first_match = .true.
 
-!Find initial minimum value
-do i =1, ntree, 1
-    attr_ = attr(i)
+!Look for min
+do i = 1, ntree, 1
+
     dbh_ = dbh(i)
-    ht_ = ht(i)
     species_ = species(i)
+    ht_ = ht(i)
 
+    !Determine if tree should be skipped in calculation
     if(dbh_ < dbhmin .or. dbh_ >= dbhmax) cycle
     if(ht_ < htmin .or. ht_ >= htmax) cycle
     if(species_ < 1) cycle
 
-    idx = i
-    exit
+    attr_ = attr(i)
+
+    ! Handle the first valid tree encountered vs subsequent comparisons
+    if (first_match) then
+        min_attr_ = attr_
+        first_match = .false.
+    else
+        if (attr_ < min_attr_) min_attr_ = attr_
+    end if
+
 end do
-
-!Now find minimum across all possible values
-if(idx > 0) then
-
-    min_attr_ = attr(idx)
-    
-    do i = 1, ntree, 1
-
-        attr_ = attr(i)
-        dbh_ = dbh(i)
-        ht_ = ht(i)
-        species_ = species(i)
-
-        !Determine if tree should be skipped in calculation
-        if(dbh_ < dbhmin .or. dbh_ >= dbhmax) cycle
-        if(ht_ < htmin .or. ht_ >= htmax) cycle
-        if(species_ < 1) cycle
-
-        if(attr_ < min_attr_) min_attr_ = attr_
-
-    end do
-
-endif
 
 end subroutine min_attr
 
@@ -884,25 +869,24 @@ integer, intent(in) :: ntree, species(ntree)
 real(real64), intent(in) :: dbh(ntree), ht(ntree), attr(ntree)
 real(real64), intent(in) :: dbhmin, dbhmax, htmin, htmax
 real(real64), intent(out) :: max_attr_
-
-!Local Variables
-real(real64) :: dbh_, attr_
+real(real64) :: dbh_, attr_, ht_
 integer :: i, species_
 logical :: first_match
 
 !Initialize variables
-max_attr_ = 0.0_real64 ! Default fallback if no trees match the criteria
+max_attr_ = 0.0_real64
 first_match = .true.
 
-!Scan the array exactly once
+!Look for max
 do i = 1, ntree, 1
 
     dbh_ = dbh(i)
     species_ = species(i)
+    ht_ = ht(i)
 
     !Determine if tree should be skipped in calculation
     if(dbh_ < dbhmin .or. dbh_ >= dbhmax) cycle
-    if(ht(i) < htmin .or. ht(i) >= htmax) cycle
+    if(ht_ < htmin .or. ht_ >= htmax) cycle
     if(species_ < 1) cycle
 
     attr_ = attr(i)

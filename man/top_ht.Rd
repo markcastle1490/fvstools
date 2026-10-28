@@ -4,7 +4,7 @@
 \alias{top_ht}
 \title{top_ht}
 \usage{
-top_ht(dbh, expf, ht, top_tpa = 40, top_per = NULL)
+top_ht(dbh, expf, ht, top_tpa = 40, top_per = 0)
 }
 \arguments{
 \item{dbh}{Numeric vector containing diameter values.}
@@ -18,8 +18,8 @@ calculation. Top 20 TPA, top 40 TPA, etc.}
 
 \item{top_per}{Numeric value corresponding to percentage of trees to include in the top
 height calculation. Largest 20\% of trees, largest 40\% of trees etc. If this
-value is not null then it will take precedence over the value in top_tpa
-argument.}
+value is greater than 0 then it will take precedence over the value in
+top_tpa argument.}
 }
 \value{
 Top height value.

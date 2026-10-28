@@ -4,7 +4,7 @@
 \alias{top_dia}
 \title{top_dia}
 \usage{
-top_dia(dbh, expf, top_tpa = 40, top_per = NULL, dia_type = 1)
+top_dia(dbh, expf, top_tpa = 40, top_per = 0, dia_type = 1)
 }
 \arguments{
 \item{dbh}{Numeric vector containing diameter values.}
@@ -15,8 +15,8 @@ top_dia(dbh, expf, top_tpa = 40, top_per = NULL, dia_type = 1)
 calculation. Largest 20 TPA, Largest 40 TPA, etc.}
 
 \item{top_per}{Numeric value corresponding to percentage of trees to include in the top
-diameter calculation. If this value is not null then it will supersede the
-value in top_tpa argument.}
+diameter calculation. If this value is greater than 0 then it will take
+precedence over the value in top_tpa argument.}
 
 \item{dia_type}{Integer value used to specify what type of diameter should be calculated.
 1 = QMD

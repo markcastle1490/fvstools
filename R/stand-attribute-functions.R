@@ -405,8 +405,8 @@ gmd = function(dbh,
 #' 
 #' @param top_per
 #' Numeric value corresponding to percentage of trees to include in the top 
-#' diameter calculation. If this value is not null then it will supersede the 
-#' value in top_tpa argument.
+#' diameter calculation. If this value is greater than 0 then it will take 
+#' precedence over the value in top_tpa argument.
 #' 
 #' @param dia_type
 #' Integer value used to specify what type of diameter should be calculated. 
@@ -422,7 +422,7 @@ gmd = function(dbh,
 top_dia = function(dbh,
                    expf,
                    top_tpa = 40,
-                   top_per = NULL,
+                   top_per = 0,
                    dia_type = 1)
 {
   #Initialize top_dia_
@@ -431,11 +431,8 @@ top_dia = function(dbh,
   #Validate top_tpa
   if(is.null(top_tpa) || top_tpa < 0) top_tpa <- 40
   
-  #Validate top_per. If top_per is not null but has an invalid value, set it to 
-  #0.
-  if(is.null(top_per)) {
-    top_per <- 0
-  } else if(top_per < 0 || top_per > 100) {
+  #Validate top_per. Default to 20 if value is invalid.
+  if (top_per < 0 || top_per > 100) {
     top_per <- 20
   }
   
@@ -1120,8 +1117,8 @@ lorey_ht = function(dbh,
 #' @param top_per
 #' Numeric value corresponding to percentage of trees to include in the top 
 #' height calculation. Largest 20% of trees, largest 40% of trees etc. If this 
-#' value is not null then it will take precedence over the value in top_tpa 
-#' argument.
+#' value is greater than 0 then it will take precedence over the value in 
+#' top_tpa argument.
 #' 
 #' @return
 #' Top height value.
@@ -1132,7 +1129,7 @@ top_ht = function(dbh,
                   expf,
                   ht,
                   top_tpa = 40,
-                  top_per = NULL)
+                  top_per = 0)
 {
   #Initialize top_ht_
   top_ht_ <- 0
@@ -1140,11 +1137,8 @@ top_ht = function(dbh,
   #Validate top_tpa
   if(is.null(top_tpa) || top_tpa < 0) top_tpa <- 40
   
-  #Validate top_per. If top_per is not null but has an invalid value, set it to 
-  #20%.
-  if(is.null(top_per)) {
-    top_per <- 0
-  } else if(top_per < 0 || top_per > 100) {
+  #Validate top_per. Default to 20 if value is invalid.
+  if (top_per < 0 || top_per > 100) {
     top_per <- 20
   }
   
@@ -2708,11 +2702,11 @@ lorey_ht_f = function(dbh,
 ################################################################################
 
 top_ht_f = function(dbh,
-                  expf,
-                  ht,
-                  top_tpa = 40,
-                  top_per = 0,
-                  naok = FALSE)
+                    expf,
+                    ht,
+                    top_tpa = 40,
+                    top_per = 0,
+                    naok = FALSE)
 {
   #Initialize top_ht_
   top_ht_ <- 0
@@ -2726,9 +2720,8 @@ top_ht_f = function(dbh,
   #Call the top_ht subroutine
   top_ht_ <- dotCall64::.C64(
     .NAME = "top_ht",
-    SIGNATURE = c("double", "integer", "double", "double", "double", "double",
+    SIGNATURE = c("integer", "double", "double", "double", "double",
                   "integer", "double"),
-    dbh = dbh,
     sorted_idx = dbh_order,
     expf = expf,
     ht = ht,
@@ -2736,7 +2729,7 @@ top_ht_f = function(dbh,
     top_per = top_per,
     ntree = ntree,
     top_ht_ = double(1),
-    INTENT = c("r", "r", "r", "r", "r", "r",
+    INTENT = c("r", "r", "r", "r", "r",
                "r", "rw"),
     NAOK = naok,
     PACKAGE = "fvstools")$top_ht_
@@ -2887,7 +2880,7 @@ mean_attr_f = function(attr,
   
   #Set weight if null
   if(is.null(weight) || length(weight) != ntree) 
-    weight <- numeric(ntree)
+    weight <- rep(1.0, ntree)
   
   #Set dbh if null
   if(is.null(dbh)) dbh <- numeric(ntree)
