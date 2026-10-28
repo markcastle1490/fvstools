@@ -251,7 +251,6 @@ top_dia_ = 0.0_real64
 tpa_ = 0.0_real64
 tpa_sum = 0.0_real64
 dbh_sum = 0.0_real64
-tpa_dif = 0.0_real64
 expf_temp = 0.0_real64
 top_exceed = .false.
 
