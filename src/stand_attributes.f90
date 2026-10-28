@@ -553,14 +553,16 @@ integer, intent(in) :: ntree, sorted_idx(ntree)
 real(real64), intent(in) :: dbh(ntree), expf(ntree), ht(ntree)
 real(real64), intent(inout) :: top_tpa, top_per
 real(real64), intent(out) :: top_ht_
-real(real64) :: expf_, ht_, tpa_, top, tpa_sum, ht_sum, missing_tpa
+real(real64) :: expf_, ht_, tpa_, top, tpa_sum, ht_sum, expf_temp
 integer :: i, idx
+logical :: top_exceed
 
 !Initialize variables
 top_ht_ = 0.0_real64
 tpa_ = 0.0_real64
 tpa_sum = 0.0_real64
 ht_sum = 0.0_real64
+top_exceed = .false.
 
 !Do checks on top_tpa and top_per
 if(top_tpa < 0.0_real64) top_tpa = 40.0_real64
@@ -592,17 +594,21 @@ if(tpa_ > 0.0_real64) then
         expf_ = expf(idx)
         ht_ = ht(idx)
 
-        !Top has been met or exceeded
+        !Calculate how much TPA to take from this tree and update tpa_sum
         if (tpa_sum + expf_ >= top) then
-            missing_tpa = top - tpa_sum
-            ht_sum = ht_sum + (ht_ * missing_tpa)
+            expf_temp = top - tpa_sum
             tpa_sum = top
-            exit 
-        !Top not yet reached
+            top_exceed = .true.
         else
-            ht_sum = ht_sum + (ht_ * expf_)
-            tpa_sum = tpa_sum + expf_
+            expf_temp = expf_
+            tpa_sum = tpa_sum + expf_temp
         end if
+
+        !Update ht_sum
+        ht_sum = ht_sum + (ht_ * expf_temp)
+
+        if (top_exceed) exit
+
     end do
 
     !Calculate top height if tpa_sum > 0
