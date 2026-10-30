@@ -825,7 +825,7 @@ ak_paya <- function(species,
 #' when type is 1 or when type is 0.
 #'
 #' @param age:
-#' A numeric vector specifying the tree breast-height age in years.
+#' A numeric vector specifying the tree age in years.
 #'
 #' @param baseage:
 #' A numeric vector or scalar specifying the index base age curve selection 
@@ -838,7 +838,7 @@ ak_paya <- function(species,
 #' @param type:
 #' An integer or numeric value specifying the calculation branch. 
 #' 
-#' 1 = Calculate site index from height
+#' 1 = Calculate site index from height and age
 #' 
 #' 2 = Calculate height from site index
 #' 
