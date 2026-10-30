@@ -1,6 +1,6 @@
 ################################################################################
 #' sdi_df
-#' @name shaw_sdi_df
+#' @name sdi_df
 #' @description Returns dataframe containing FIA species codes, species common
 #' names, number of subplots used to derive SDI, lower SDI max, SDI max, and 
 #' upper SDI max.
@@ -15,7 +15,7 @@ sdi_df <- function()
 
 ################################################################################
 #' sdi_lookup
-#' @name fortyp_lookup
+#' @name sdi_lookup
 #' @description Returns maximum SDI value from incoming FIA species code.
 #' 
 #' @param species
