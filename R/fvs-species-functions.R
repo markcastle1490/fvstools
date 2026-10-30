@@ -276,7 +276,7 @@ fvs_sp_index <- function(var_code = NULL,
   
   #Consolidated search loop
   for (sp_list in sp_lookups) {
-    still_na_idx <- which(is.na(sp_index))
+    still_na_idx <- is.na(sp_index)
     if (length(still_na_idx) == 0) break
     
     #Match unresolved species elements
