@@ -208,32 +208,29 @@ fvs_sp_lookup <- function(var_code,
                           sp,
                           to = 1)
 {
-  #Check from and to
-  if (!to %in% 1:4) {
-    stop("Invalid 'to' (1-4) parameters.")
-  }
-
+  #Check to
+  if (!to %in% 1:4) to <- 1
+  
   #Upper case variant and sp
   var_code <- toupper(var_code)
   sp <- toupper(sp)
-
-  #Extract row indices
+  
+  #Extract the local list position indices
   sp_index <- fvs_sp_index(var_code = var_code, sp = sp)
   
-  #Determine list to get based on to
-  cols <- c("FVS", "FIA", "PLANT", "SEQ")
-  target_col <- cols[to]
+  # Map 'to' directly to species lists
+  sp_lookups <- list(
+    fvs_char_list,   
+    fvs_fia_list,    
+    fvs_plant_list, 
+    fvs_seq_list     
+  )
   
-  #Extract species
-  sp_to <- fvs_species[[target_col]][sp_index]
-  
-  #Final type casting
-  if (to %in% c(4)) {
-    sp_to <- as.integer(sp_to)
-  }
-  
+  # Extract the clean value directly from the variant's list slot
+  sp_to <- sp_lookups[[to]][[var_code]][sp_index]
+
   return(sp_to)
-}  
+}
 
 ################################################################################
 #' fvs_sp_index
@@ -264,22 +261,29 @@ fvs_sp_index <- function(var_code = NULL,
                          sp = NULL)
 {
 
-  #Define columns to search
-  search_cols <- c("FVS", "FIA", "PLANT")
-
   #Initialize sp_index
   sp_index <- rep(NA_integer_, length(sp))
-
-  #Start the search
-  for (search in search_cols) {
-    still_na <- is.na(sp_index)
-    if (!any(still_na)) break
   
-    matches <- match(paste0(var_code[still_na], "_", sp[still_na]),
-                   paste0(fvs_species$VARIANT, "_", fvs_species[[search]]))
-    sp_index[still_na] <- matches
+  #Return if var_code is not valid
+  if(!var_code %in% fvs_variants()) return(sp_index)
+
+  #Map search keys to their respective list objects
+  sp_lookups <- list(
+    FVS   = fvs_char_list,
+    FIA   = fvs_fia_list,
+    PLANT = fvs_plant_list
+  )
+  
+  #Consolidated search loop
+  for (sp_list in sp_lookups) {
+    still_na_idx <- which(is.na(sp_index))
+    if (length(still_na_idx) == 0) break
+    
+    #Match unresolved species elements
+    matches <- match(sp[still_na_idx], sp_list[[var_code]])
+    
+    sp_index[still_na_idx] <- matches
   }
 
   return(sp_index)
 }
-  
