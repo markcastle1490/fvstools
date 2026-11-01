@@ -673,14 +673,14 @@ time_keys <- function(invyear = NULL,
   #length in years differs from the default cycle length.
   for(i in seq_along(year_difs))
   {
-    #Calculate difference between years
+    #Get dif
     dif <- year_difs[i]
     
     #If max_cycles cycles has been exceeded break out of loop
     if(cycle_num >= max_cycles) break
     else cycle_num <- cycle_num + 1
     
-    #If dif != cycle_length then add another timeInt keyword to time_keys_
+    #If dif != cycle_length, then add another timeInt keyword to add_timeint
     if(dif != cycle_length)
     {
       add_timeint[cycle_num] <- paste(fvs_keyword(params = list("TIMEINT",
@@ -693,13 +693,12 @@ time_keys <- function(invyear = NULL,
   add_timeint <- add_timeint[add_timeint != ""]
 
   #Combine keywords
-  time_keys_ <- c(timeint_all,
-                  add_timeint,
-                  fvs_keyword(params = list("NUMCYCLE", 
-                                                as.character(cycle_num))))
-
-  #Combine timing keywords
-  time_keys_ <- paste(time_keys_, collapse = "\n")
+  time_keys_ <- paste(
+    c(timeint_all,
+      add_timeint,
+      fvs_keyword(params = list("NUMCYCLE", 
+                                cycle_num))),
+    collapse = "\n")
   
   return(time_keys_)
 }
