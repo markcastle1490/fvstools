@@ -6,10 +6,10 @@
 #' 1) State specific SQLite FIA database(s)
 #'
 #' 2) All .csv files for state(s).
-#'
-#' 3) Specific .csv for state. AK_TREE.csv, AK_PLOT.csv, etc.
 #' 
-#' 4) FIA Reference tables (.zip)
+#' 3) FIA Reference tables (.zip)
+#'
+#' 4) Specific .csv for state. AK_TREE.csv, AK_PLOT.csv, etc.
 #'
 #' The downloaded files are extracted and stored on a specified local directory.
 #' 
@@ -24,9 +24,9 @@
 #'
 #' 2 = All csv files for state(s)
 #' 
-#' 3 = Specific .csv files for state(s)
+#' 3 = Reference table .csv files (not specific to any state)
 #'
-#' 4 = Reference table .csv files (not specific to any state)
+#' 4 = Specific .csv for state(s)
 #' 
 #' @param states
 #' Vector of two-character state abbreviations. Valid state codes are listed 

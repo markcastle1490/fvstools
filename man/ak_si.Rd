@@ -14,7 +14,7 @@ ak_si(species, ht, age, baseage = 100, si, type = 0)
 \item{ht:}{A numeric vector specifying the total tree height in feet. Used as an input
 when type is 1 or when type is 0.}
 
-\item{age:}{A numeric vector specifying the tree breast-height age in years.}
+\item{age:}{A numeric vector specifying the tree age in years.}
 
 \item{baseage:}{A numeric vector or scalar specifying the index base age curve selection
 passed down to the underlying Hegyi function. Defaults to 100.}
@@ -24,7 +24,7 @@ an input when type is 2 or when type is 0.}
 
 \item{type:}{An integer or numeric value specifying the calculation branch.
 
-1 = Calculate site index from height
+1 = Calculate site index from height and age
 
 2 = Calculate height from site index
 
