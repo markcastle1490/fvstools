@@ -22,9 +22,9 @@ databases will be stored. Defaults to NULL.}
 
 2 = All csv files for state(s)
 
-3 = Specific .csv files for state(s)
+3 = Reference table .csv files (not specific to any state)
 
-4 = Reference table .csv files (not specific to any state)}
+4 = Specific .csv for state(s)}
 
 \item{states}{Vector of two-character state abbreviations. Valid state codes are listed
 below:
@@ -48,8 +48,8 @@ This function is used to download one of the following:
 \enumerate{
 \item State specific SQLite FIA database(s)
 \item All .csv files for state(s).
-\item Specific .csv for state. AK_TREE.csv, AK_PLOT.csv, etc.
 \item FIA Reference tables (.zip)
+\item Specific .csv for state. AK_TREE.csv, AK_PLOT.csv, etc.
 }
 
 The downloaded files are extracted and stored on a specified local directory.

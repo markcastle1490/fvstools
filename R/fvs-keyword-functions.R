@@ -634,15 +634,16 @@ time_keys <- function(invyear = NULL,
   
   #Obtain years from start year to end year of simulation and cycle at values
   to_end <- sort(unique(c(seq(from = start_year, to = end_year, by = cycle_length),
-                        end_year,
-                        cycle_at)))
+                   end_year,
+                   cycle_at)))
   
   #Filter years to ensure they sit strictly within our valid simulation bounds
   to_end <- to_end[to_end >= invyear & to_end <= end_year]
   
   #Now get get years from inventory year to first value in to_end
-  years <- union(seq(from = invyear, to = to_end[1], by = cycle_length),
-                 to_end)
+  years <- sort(unique(c(
+    seq(from = invyear, to = to_end[1], by = cycle_length),
+    to_end)))
   
   #Do debug if requested.
   if(verbose)
@@ -661,36 +662,35 @@ time_keys <- function(invyear = NULL,
                                                 "0", 
                                                 as.character(cycle_length))))
   
-  #Create add_timeint list
-  add_timeint <- list()
-  add_insert <- 1
-  
-  #Initialize cycle_num to keep track of number of cycles.
+  #Create add_timeint and cycle_num counter
+  add_timeint <- character(max_cycles)
   cycle_num <- 0
+  
+  #Generate difference between years vector
+  year_difs <- diff(years)
   
   #Loop across years and create additional TIMEINT keywords for cycles whose 
   #length in years differs from the default cycle length.
-  for(i in 1:(length(years) - 1))
+  for(i in seq_along(year_difs))
   {
-    year1 <- years[i]
-    year2 <- years[i + 1]
-    
     #Calculate difference between years
-    dif <- (year2 - year1) %% cycle_length
+    dif <- year_difs[i]
     
     #If max_cycles cycles has been exceeded break out of loop
     if(cycle_num >= max_cycles) break
     else cycle_num <- cycle_num + 1
     
-    #If dif != 0 then add another timeInt keyword to time_keys_
-    if(dif != 0)
+    #If dif != cycle_length then add another timeInt keyword to time_keys_
+    if(dif != cycle_length)
     {
-      add_timeint[[add_insert]] <- paste(fvs_keyword(params = list("TIMEINT",
-                                         as.character(cycle_num), 
-                                         as.character(dif))))
-      add_insert <- add_insert + 1
+      add_timeint[cycle_num] <- paste(fvs_keyword(params = list("TIMEINT",
+                                      as.character(cycle_num), 
+                                      as.character(dif))))
     }
   }
+  
+  #Drop empty entries from add_timeint
+  add_timeint <- add_timeint[add_timeint != ""]
 
   #Combine keywords
   time_keys_ <- c(timeint_all,
