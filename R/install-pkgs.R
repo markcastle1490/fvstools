@@ -19,10 +19,10 @@ install_pkgs <- function(override = FALSE)
 {
   #Vector of required packages
   required_packages <- c("RSQLite",
+                         "utils",
+                         "tools",
                          "httr2",
-                         "callr",
-                         "dplyr",
-                         "data.table")
+                         "callr")
   
   #Get vector of installed packages
   installed_pkg <- installed.packages()[, "Package"]
