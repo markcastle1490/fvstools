@@ -78,11 +78,16 @@ fortyp_index <- function(fortyp = NULL) {
 
   #Search for forest type
   for (search in search_cols) {
-    still_na <- is.na(fortyp_index)
-    if (!any(still_na)) break
     
+    #Identify values that are still NA
+    still_na <- is.na(fortyp_index)
+    
+    #Look for indices
     matches <- match(fortyp[still_na], fortyp_codes[[search]])
     fortyp_index[still_na] <- matches
+    
+    #Break if there are no longer any NA values
+    if (!any(is.na(fortyp_index))) break
   }
 
   return(fortyp_index)

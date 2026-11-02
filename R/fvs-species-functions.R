@@ -276,13 +276,16 @@ fvs_sp_index <- function(var_code = NULL,
   
   #Consolidated search loop
   for (sp_list in sp_lookups) {
-    still_na_idx <- is.na(sp_index)
-    if (length(still_na_idx) == 0) break
     
-    #Match unresolved species elements
-    matches <- match(sp[still_na_idx], sp_list[[var_code]])
+    #Identify values that are still NA
+    still_na <- is.na(sp_index)
     
-    sp_index[still_na_idx] <- matches
+    #Look for indices
+    matches <- match(sp[still_na], sp_list[[var_code]])
+    sp_index[still_na] <- matches
+    
+    #Break if there are no NA values
+    if (!any(is.na(sp_index))) break
   }
 
   return(sp_index)

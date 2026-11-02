@@ -95,11 +95,16 @@ state_index <- function(state = NULL)
   
   #Start the search
   for (search in search_cols) {
+    
+    #Identify any NA values
     still_na <- is.na(state_index)
-    if (!any(still_na)) break
   
+    #Look for indices
     matches <- match(state[still_na], state_codes[[search]])
     state_index[still_na] <- matches
+    
+    #Break if there are no NA values
+    if (!any(is.na(state_index))) break
   }
   
   return(state_index)

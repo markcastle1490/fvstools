@@ -116,11 +116,16 @@ sp_index <- function(sp = NULL)
 
   #Start the search
   for (search in search_cols) {
+    
+    #Identify values that are still NA
     still_na <- is.na(sp_index)
-    if (!any(still_na)) break
   
+    #Look for indices
     matches <- match(sp[still_na], support_sp[[search]])
     sp_index[still_na] <- matches
+    
+    #Break if there are no NA values
+    if (!any(is.na(sp_index))) break
   }
 
   return(sp_index)
