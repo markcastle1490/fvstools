@@ -414,6 +414,10 @@ gmd = function(dbh,
 #' 2 = average diameter weighted by trees per acre 
 #' 3 = GMD (Reineke diameter)
 #' 
+#' @param sorted
+#' Logical variable used to indicate if values in dbh are already in descending
+#' order.
+#' 
 #' @return
 #' Numeric top diameter value.
 #' @export
@@ -423,7 +427,8 @@ top_dia = function(dbh,
                    expf,
                    top_tpa = 40,
                    top_per = 0,
-                   dia_type = 1)
+                   dia_type = 1,
+                   sorted = FALSE)
 {
   #Initialize top_dia_
   top_dia_ <- 0
@@ -455,12 +460,16 @@ top_dia = function(dbh,
     # Constrain target top TPA to not exceed total stand TPA
     if(top > tpa_) top <- tpa_
     
-    #Get order of DBH values in descending order
-    dbh_order <- order(-dbh)
-    
-    #Sort vectors
-    dbh  <- dbh[dbh_order]
-    expf <- expf[dbh_order]
+    #Sort data if needed
+    if(!sorted)
+    {
+      #Get order of DBH values in descending order
+      dbh_order <- order(-dbh)
+      
+      #Sort vectors
+      dbh  <- dbh[dbh_order]
+      expf <- expf[dbh_order]
+    }
     
     #Find the index where top is exceeded
     top_exceed <- match(TRUE, cumsum(expf) >= top)
@@ -961,6 +970,10 @@ correct_cc = function(cc = 0)
 #' values will have the same BAL value (e.g. 3 trees with 10 inch DBH will all 
 #' have the same BAL).
 #' 
+#' @param sorted
+#' Logical variable used to indicate if values in dbh are already in descending
+#' order.
+#' 
 #' @return
 #' Numeric vector containing BAL values
 #' @export
@@ -968,21 +981,27 @@ correct_cc = function(cc = 0)
 
 bal = function(dbh,
                expf,
-               no_ties = TRUE)
+               no_ties = TRUE,
+               sorted = FALSE)
 {
-  #Get indices of sorted DBH in descending order
-  dbh_order <- order(-dbh)
-  
-  #Create sequence of integers. This will be used to reorder bal
-  orig_order <- 1:length(dbh)
   
   #Get tree basal area
   tree_ba <- (dbh*dbh) * expf * f_con
   
-  #Sort vectors
-  tree_ba <- tree_ba[dbh_order]
-  dbh <- dbh[dbh_order]
+  #Identify initial order
+  dbh_order <- seq_along(dbh)
   
+  #Determine if sorting should be done
+  if(!sorted)
+  {
+    #Get indices of sorted DBH in descending order
+    dbh_order <- order(-dbh)
+    
+    #Sort vectors
+    tree_ba <- tree_ba[dbh_order]
+    dbh <- dbh[dbh_order]
+  }
+
   #Don't handle ties.
   if(no_ties)
   {
@@ -1002,7 +1021,7 @@ bal = function(dbh,
   }
   
   #Reset order to match input
-  bal <- bal[match(orig_order, dbh_order)]
+  bal <- bal[match(seq_along(dbh_order), dbh_order)]
   
   return(bal)
 }
@@ -1120,6 +1139,10 @@ lorey_ht = function(dbh,
 #' value is greater than 0 then it will take precedence over the value in 
 #' top_tpa argument.
 #' 
+#' @param sorted
+#' Logical variable used to indicate if values in dbh are already in descending
+#' order.
+#' 
 #' @return
 #' Top height value.
 #' @export
@@ -1129,7 +1152,8 @@ top_ht = function(dbh,
                   expf,
                   ht,
                   top_tpa = 40,
-                  top_per = 0)
+                  top_per = 0,
+                  sorted = FALSE)
 {
   #Initialize top_ht_
   top_ht_ <- 0
@@ -1158,13 +1182,15 @@ top_ht = function(dbh,
     # Constrain target top TPA to not exceed total stand TPA
     if(top > tpa_) top <- tpa_
     
-    #Get order of DBH values in descending order
-    dbh_order <- order(-dbh)
-    
-    #Sort vectors
-    dbh  <- dbh[dbh_order]
-    expf <- expf[dbh_order]
-    ht <- ht[dbh_order]
+    if(!sorted)
+    {
+      #Get order of DBH values in descending order
+      dbh_order <- order(-dbh)
+      
+      #Sort vectors
+      expf <- expf[dbh_order]
+      ht <- ht[dbh_order]
+    }
     
     #Find the index where top is exceeded
     top_exceed <- match(TRUE, cumsum(expf) >= top)
@@ -2196,7 +2222,11 @@ lorey_dia_f = function(dbh,
 #' contain NA values. If TRUE, checks for NA values will not be done. Setting 
 #' this value to TRUE will speed up processing but can be risky if input vectors
 #' are not vetted for NA values prior.
-#
+#'
+#' @param sorted
+#' Logical variable used to indicate if values in dbh are already in descending
+#' order.
+#'
 #' @return 
 #' Numeric top diameter value.
 ################################################################################
@@ -2207,7 +2237,8 @@ top_dia_f = function(dbh,
                     top_tpa = 40,
                     top_per = 0,
                     dia_type = 1,
-                    naok = FALSE)
+                    naok = FALSE,
+                    sorted = FALSE)
 {
   #Initialize top_dia_
   top_dia_ <- 0
@@ -2216,7 +2247,10 @@ top_dia_f = function(dbh,
   if(!dia_type %in% c(1, 2, 3)) dia_type <- 1
   
   #Get order of DBH values in descending order
-  dbh_order <- order(-dbh)
+  if(!sorted) 
+    dbh_order <- order(-dbh)
+  else
+    dbh_order <- seq_along(dbh)
   
   #Get number of trees
   ntree <- length(expf)
@@ -2696,6 +2730,10 @@ lorey_ht_f = function(dbh,
 #' this value to TRUE will speed up processing but can be risky if input vectors 
 #' are not vetted for NA values prior.
 #' 
+#' @param sorted
+#' Logical variable used to indicate if values in dbh are already in descending
+#' order.
+#' 
 #' @return
 #' Top height value.
 #' @export
@@ -2706,13 +2744,17 @@ top_ht_f = function(dbh,
                     ht,
                     top_tpa = 40,
                     top_per = 0,
-                    naok = FALSE)
+                    naok = FALSE,
+                    sorted = FALSE)
 {
   #Initialize top_ht_
   top_ht_ <- 0
   
   #Get order of DBH values in descending order
-  dbh_order <- order(-dbh)
+  if(!sorted) 
+    dbh_order <- order(-dbh)
+  else
+    dbh_order <- dbh_order <- seq_along(dbh)
   
   #Get number of trees
   ntree <- length(expf)
@@ -2764,6 +2806,10 @@ top_ht_f = function(dbh,
 #' this value to TRUE will speed up processing but can be risky if input vectors 
 #' are not vetted for NA values prior.
 #' 
+#' @param sorted
+#' Logical variable used to indicate if values in dbh are already in descending
+#' order.
+#' 
 #' @return
 #' Numeric vector containing BAL values
 #' @export
@@ -2772,13 +2818,17 @@ top_ht_f = function(dbh,
 bal_f = function(dbh,
                  expf,
                  no_ties = 1,
-                 naok = FALSE)
+                 naok = FALSE,
+                 sorted = FALSE)
 {
   #Check no_ties
   if(!no_ties %in% c(0, 1)) no_ties <- 0
 
   #Get order of DBH values in descending order
-  dbh_order <- order(-dbh)
+  if(!sorted)
+    dbh_order <- order(-dbh)
+  else
+    dbh_order <- seq_along(dbh)
   
   #Get number of trees
   ntree <- length(expf)

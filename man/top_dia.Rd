@@ -4,7 +4,7 @@
 \alias{top_dia}
 \title{top_dia}
 \usage{
-top_dia(dbh, expf, top_tpa = 40, top_per = 0, dia_type = 1)
+top_dia(dbh, expf, top_tpa = 40, top_per = 0, dia_type = 1, sorted = FALSE)
 }
 \arguments{
 \item{dbh}{Numeric vector containing diameter values.}
@@ -22,6 +22,9 @@ precedence over the value in top_tpa argument.}
 1 = QMD
 2 = average diameter weighted by trees per acre
 3 = GMD (Reineke diameter)}
+
+\item{sorted}{Logical variable used to indicate if values in dbh are already in descending
+order.}
 }
 \value{
 Numeric top diameter value.

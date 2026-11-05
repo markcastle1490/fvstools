@@ -4,7 +4,7 @@
 \alias{top_ht}
 \title{top_ht}
 \usage{
-top_ht(dbh, expf, ht, top_tpa = 40, top_per = 0)
+top_ht(dbh, expf, ht, top_tpa = 40, top_per = 0, sorted = FALSE)
 }
 \arguments{
 \item{dbh}{Numeric vector containing diameter values.}
@@ -20,6 +20,9 @@ calculation. Top 20 TPA, top 40 TPA, etc.}
 height calculation. Largest 20\% of trees, largest 40\% of trees etc. If this
 value is greater than 0 then it will take precedence over the value in
 top_tpa argument.}
+
+\item{sorted}{Logical variable used to indicate if values in dbh are already in descending
+order.}
 }
 \value{
 Top height value.

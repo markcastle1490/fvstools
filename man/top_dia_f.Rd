@@ -4,7 +4,15 @@
 \alias{top_dia_f}
 \title{top_dia_f}
 \usage{
-top_dia_f(dbh, expf, top_tpa = 40, top_per = 0, dia_type = 1, naok = FALSE)
+top_dia_f(
+  dbh,
+  expf,
+  top_tpa = 40,
+  top_per = 0,
+  dia_type = 1,
+  naok = FALSE,
+  sorted = FALSE
+)
 }
 \arguments{
 \item{dbh}{Numeric vector containing diameter values.}
@@ -27,6 +35,9 @@ top_tpa argument.}
 contain NA values. If TRUE, checks for NA values will not be done. Setting
 this value to TRUE will speed up processing but can be risky if input vectors
 are not vetted for NA values prior.}
+
+\item{sorted}{Logical variable used to indicate if values in dbh are already in descending
+order.}
 }
 \value{
 Numeric top diameter value.

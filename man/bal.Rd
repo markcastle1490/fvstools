@@ -4,7 +4,7 @@
 \alias{bal}
 \title{bal}
 \usage{
-bal(dbh, expf, no_ties = TRUE)
+bal(dbh, expf, no_ties = TRUE, sorted = FALSE)
 }
 \arguments{
 \item{dbh}{Numeric vector containing diameter values.}
@@ -17,6 +17,9 @@ values will have a different BAL (3 trees with 10 inch DBH will each have a
 different BAL). If this value is FALSE, then trees with equivalent DBH
 values will have the same BAL value (e.g. 3 trees with 10 inch DBH will all
 have the same BAL).}
+
+\item{sorted}{Logical variable used to indicate if values in dbh are already in descending
+order.}
 }
 \value{
 Numeric vector containing BAL values
