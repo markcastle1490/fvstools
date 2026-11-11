@@ -1,11 +1,9 @@
-#Development
-devtools::load_all()
-
-#Generate documentation
+#Document
 devtools::document()
 
-#Build source archive
+#Check
 devtools::build()
 
 #Install
 devtools::install()
+
