@@ -16,8 +16,7 @@ Imports:
     RSQLite,
     utils,
     tools,
-    httr2,
-    callr
+    httr2
 Encoding: UTF-8
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 7.3.3
