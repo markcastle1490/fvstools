@@ -1,7 +1,7 @@
 #Document
 devtools::document()
 
-#Check
+#Build
 devtools::build()
 
 #Install
