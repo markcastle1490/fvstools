@@ -16,7 +16,6 @@ Imports:
     RSQLite,
     utils,
     tools,
-    httr2,
     dotCall64
 Encoding: UTF-8
 Config/roxygen2/version: 8.0.0
