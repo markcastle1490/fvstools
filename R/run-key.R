@@ -91,15 +91,31 @@ run_key = function(dll_path = "C:/FVS/FVSSoftware/FVSbin",
     cat("keyfile:", keyfile, "\n")
   }
   
-  #Call run_fvs
-  ret_code <- run_fvs(dll_path = dll_path,
-                     var_code = var_code,
-                     keyfile = keyfile_)
+  #Load variant dll and specify directory path to dll in bin folder
+  rFVS::fvsLoad(var_code, bin = dll_path)
   
-  #Print return code
-  if(verbose) cat("FVS return code:", ret_code, "\n", "\n")
+  #Unload the dll on exit
+  on.exit(expr = {
+    
+    #Code used in fvsLoad rFVS function.
+    if (exists(".FVSLOADEDLIBRARY", envir=.GlobalEnv)) 
+    {
+      loaded <- get(".FVSLOADEDLIBRARY", envir=.GlobalEnv)$ldf
+      dyn.unload(loaded)
+      remove(".FVSLOADEDLIBRARY",envir=.GlobalEnv)
+    }},
+    add = TRUE)
   
-  invisible(ret_code)
+  #Set keyword file to command line
+  rFVS::fvsSetCmdLine(paste0("--keywordfile=", keyfile_))
+  
+  #Initialize return code
+  retcode <- 0
+  
+  #Keep running FVS until a return code other than 0, is returned.
+  while(retcode == 0) retcode = rFVS::fvsRun()
+  
+  invisible(retcode)
 }
 
 ################################################################################
@@ -189,61 +205,6 @@ run_key_rscript = function(script_path = NULL,
   close(con = con)
   
   invisible()
-}
-
-################################################################################
-#' run_fvs
-#' @name run_fvs
-#' @description This function is called from run_key and run_key_callr and is 
-#' used to fulfill a simulation using input arguments corresponding to path 
-#' where FVS variant dlls are stored, a variant code, and keyword file name.
-#' 
-#' @param dll_path
-#' Character string corresponding to directory where FVS dlls are stored. 
-#' Defaults to "C:/FVS/FVSSoftware/FVSbin".
-#' 
-#' @param var_code
-#' Character string 'FVS' appended to a lowercase variant code (e.g. 'FVSca'). 
-#' Defaults to "FVSie".
-#' 
-#' @param keyfile
-#' Character string corresponding to keyword file name. Defaults to "C:/FVS.key".
-#' 
-#' @return
-#' FVS return code invisibly returned.
-#' @export
-################################################################################
-
-run_fvs = function(dll_path = "C:/FVS/FVSSoftware/FVSbin",
-                   var_code = "FVSie",
-                   keyfile = "C:/FVS.key")
-  
-{
-  #Load variant dll and specify directory path to dll in bin folder
-  rFVS::fvsLoad(var_code, bin = dll_path)
-  
-  #Unload the dll on exit
-  on.exit(expr = {
-    
-    #Code used in fvsLoad rFVS function.
-    if (exists(".FVSLOADEDLIBRARY", envir=.GlobalEnv)) 
-    {
-      loaded <- get(".FVSLOADEDLIBRARY", envir=.GlobalEnv)$ldf
-      dyn.unload(loaded)
-      remove(".FVSLOADEDLIBRARY",envir=.GlobalEnv)
-    }},
-    add = TRUE)
-  
-  #Set keyword file to command line
-  rFVS::fvsSetCmdLine(paste0("--keywordfile=", keyfile))
-  
-  #Initialize return code
-  retcode <- 0
-  
-  #Keep running FVS until a return code other than 0, is returned.
-  while(retcode == 0) retcode = rFVS::fvsRun()
-  
-  invisible(retcode)
 }
 
 ################################################################################
