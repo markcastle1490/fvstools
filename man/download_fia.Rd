@@ -9,7 +9,9 @@ download_fia(
   type = 1,
   states = NULL,
   tables = NULL,
-  verbose = FALSE
+  verbose = FALSE,
+  timeout = 600,
+  max_tries = 3
 )
 }
 \arguments{
@@ -22,12 +24,12 @@ databases will be stored. Defaults to NULL.}
 
 2 = All csv files for state(s)
 
-3 = Reference table .csv files (not specific to any state)
+3 = FIA Reference tables ZIP archive.
 
-4 = Specific .csv for state(s)}
+4 = Specific .csv files for state. AK_TREE.csv, AK_PLOT.csv, etc.}
 
-\item{states}{Vector of two-character state abbreviations. Valid state codes are listed
-below:
+\item{states}{Vector of two-character state abbreviations. This argument is required
+for types 1, 2, and 4, and is ignored for type 3.
 
 "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
 "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
@@ -38,7 +40,14 @@ below:
 
 Defaults to NULL. This argument will be ignored when type is 3.}
 
-\item{tables}{Character vector containing valid, FIA table names (e.g. 'TREE', PLOT').}
+\item{tables}{Character vector containing valid, FIA table names (e.g. 'TREE', PLOT'). Only
+used when type is 4.}
+
+\item{timeout}{Numeric value specifying the download timeout in seconds. Only the first
+value is used. This argument is required and must be greater than zero.}
+
+\item{max_tries}{Numeric value specifying the maximum number of download attempts. Only the
+first value is used. This argument is required and must be at least 1.}
 }
 \value{
 None
@@ -48,8 +57,8 @@ This function is used to download one of the following:
 \enumerate{
 \item State specific SQLite FIA database(s)
 \item All .csv files for state(s).
-\item FIA Reference tables (.zip)
-\item Specific .csv for state. AK_TREE.csv, AK_PLOT.csv, etc.
+\item FIA Reference tables ZIP archive.
+\item Specific .csv files for state. AK_TREE.csv, AK_PLOT.csv, etc.
 }
 
 The downloaded files are extracted and stored on a specified local directory.

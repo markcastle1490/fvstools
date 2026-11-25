@@ -7,7 +7,7 @@
 fvs_keyfile(
   keyfile,
   standid,
-  invyear,
+  invyear = NULL,
   standcn = NULL,
   keywords = NULL,
   stand_keys = NULL,
@@ -33,8 +33,8 @@ being created.}
 
 \item{standid}{Character vector of stand identification numbers.}
 
-\item{invyear}{Numeric vector of inventory years for each stand in standid and or standcn
-arguments.}
+\item{invyear}{Optional numeric vector of inventory years for each stand in standid and or
+standcn arguments.}
 
 \item{standcn}{Optional character vector of stand control numbers. If values are not defined
 for this argument, then the value from standid will be used as the stand

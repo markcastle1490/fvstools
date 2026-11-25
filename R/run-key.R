@@ -113,7 +113,7 @@ run_key = function(dll_path = "C:/FVS/FVSSoftware/FVSbin",
   retcode <- 0
   
   #Keep running FVS until a return code other than 0, is returned.
-  while(retcode == 0) retcode = rFVS::fvsRun()
+  while(retcode == 0) retcode <- rFVS::fvsRun()
   
   invisible(retcode)
 }

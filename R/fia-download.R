@@ -221,115 +221,51 @@ download_fia <- function(output = NULL,
   # Build a single download plan
   # --------------------------------------------------------------------------
   
-  # SQLite databases
-  if (type == 1) {
-    
-    download_plan <- paste0(
-      "SQLite_FIADB_",
-      states,
-      ".zip")
-    
-    names(download_plan) <- states
-    
-    # CSV ZIP archives
-  } else if (type == 2) {
-    
-    download_plan <- paste0(
-      states,
-      "_CSV.zip")
-    
-    names(download_plan) <- states
-    
-    # FIA reference ZIP archive
-  } else if (type == 3) {
-    
-    download_plan <- "FIADB_REFERENCE.zip"
-    names(download_plan) <- "REF"
-    
-    # Individual CSV files
-  } else if (type == 4) {
-    
-    download_plan <- paste0(
-      rep(states, each = length(tables)),
-      "_",
-      rep(tables, times = length(states)),
-      ".csv")
-    
-    names(download_plan) <- rep(
-      states,
-      each = length(tables)
-    )
-    
-  } else {
-    
-    stop(
-      "Invalid type passed: ",
-      type,
-      call. = FALSE
-    )
-  }
+  download_plan <- switch(
+    as.character(type),
+    "1" = setNames(paste0("SQLite_FIADB_", states, ".zip"), states),
+    "2" = setNames(paste0(states, "_CSV.zip"), states),
+    "3" = c(REF = "FIADB_REFERENCE.zip"),
+    "4" = setNames(
+      as.vector(outer(tables, states, function(t, s) paste0(s, "_", t, ".csv"))),
+      rep(states, each = length(tables))
+    ),
+    stop("Invalid type passed: ", type, call. = FALSE)
+  )
   
   # --------------------------------------------------------------------------
   # Download each file
   # --------------------------------------------------------------------------
   
   for (k in seq_along(download_plan)) {
-    
     target <- names(download_plan)[k]
     file <- download_plan[[k]]
-    
     filename_url <- paste0(url, file)
     filename_disk <- file.path(output, file)
     
     if (verbose) {
       cat(
-        "Processing:",
-        target,
-        "\n",
-        "Downloading file:",
-        filename_url,
-        "to",
-        filename_disk,
-        "\n")
+        "Processing:", target, "\n",
+        "Downloading file:", filename_url, "to", filename_disk, "\n")
     }
     
     # Remove a preexisting local file
     if (file.exists(filename_disk)) {
-      
-      if (verbose) {
-        cat(
-          "Removing preexisting local file:",
-          filename_disk,
-          "\n")
-      }
+      if (verbose) cat("Removing preexisting local file:", filename_disk, "\n")
       
       unlink(filename_disk, force = TRUE)
-      
       if (file.exists(filename_disk)) {
-        stop(
-          "Unable to remove preexisting file: ",
-          filename_disk,
-          call. = FALSE
-        )
+        stop("Unable to remove preexisting file: ", filename_disk, call. = FALSE)
       }
     }
     
-    # Download with retries
+    #Download with retries
     download_success <- FALSE
     last_error <- NULL
     download_status <- NA_integer_
     
     for (attempt in seq_len(max_tries)) {
-      
-      if (verbose) {
-        cat(
-          "Download attempt",
-          attempt,
-          "of",
-          max_tries,
-          "\n"
-        )
-      }
+      if (verbose) cat("Download attempt", attempt, "of", max_tries, "\n")
       
       download_status <- tryCatch(
         utils::download.file(
@@ -346,74 +282,46 @@ download_fia <- function(output = NULL,
       )
       
       # download.file() returns zero on success
-      if (identical(as.integer(download_status), 0L) &&
-          file.exists(filename_disk) &&
-          isTRUE(file.info(filename_disk)$size > 0)) {
-        
+      is_valid <- identical(as.integer(download_status), 0L) &&
+        file.exists(filename_disk) &&
+        isTRUE(file.info(filename_disk)$size > 0)
+      
+      if (is_valid) {
         download_success <- TRUE
         break
       }
       
       # Remove partial or failed downloads before retrying
-      if (file.exists(filename_disk)) {
-        unlink(filename_disk, force = TRUE)
-      }
+      if (file.exists(filename_disk)) unlink(filename_disk, force = TRUE)
       
       if (attempt < max_tries) {
         wait_seconds <- min(60, 2^(attempt - 1L))
-        
-        if (verbose) {
-          cat(
-            "Download failed. Retrying in",
-            wait_seconds,
-            "seconds.\n"
-          )
-        }
-        
+        if (verbose) cat("Download failed. Retrying in", wait_seconds, "seconds.\n")
         Sys.sleep(wait_seconds)
       }
     }
     
     if (!download_success) {
-      
       if (is.null(last_error)) {
-        last_error <- paste(
-          "download.file() returned status",
-          download_status
-        )
+        last_error <- paste("download.file() returned status", download_status)
       }
-      
-      stop(
-        "Network transaction failed or data was not accessible: ",
-        last_error,
-        call. = FALSE
-      )
+      stop("Network transaction failed or data was not accessible: ", 
+           last_error, 
+           call. = FALSE)
     }
     
-    if (verbose) {
-      cat("Download completed successfully.\n")
-    }
+    if (verbose) cat("Download completed successfully.\n")
     
     # Extract ZIP archives for types 1 through 3
     if (type %in% 1:3) {
-      
-      if (verbose) {
-        cat("Extracting files from:", filename_disk, "\n")
-      }
+      if (verbose) cat("Extracting files from:", filename_disk, "\n")
       
       tryCatch(
-        utils::unzip(
-          zipfile = filename_disk,
-          exdir = output
-        ),
+        utils::unzip(zipfile = filename_disk, exdir = output),
         error = function(e) {
-          stop(
-            "Unable to extract downloaded archive ",
-            filename_disk,
-            ": ",
-            conditionMessage(e),
-            call. = FALSE
-          )
+          stop("Unable to extract downloaded archive ",
+               filename_disk, ": ", conditionMessage(e),
+               call. = FALSE)
         }
       )
       
@@ -423,24 +331,15 @@ download_fia <- function(output = NULL,
       }
       
       delete_status <- unlink(filename_disk, force = TRUE)
-      
       if (delete_status != 0L || file.exists(filename_disk)) {
-        warning(
-          filename_disk,
-          " was not deleted successfully.",
-          call. = FALSE
-        )
+        warning(filename_disk, " was not deleted successfully.", call. = FALSE)
       }
     }
     
-    if (verbose) {
-      cat("Finished processing:", file, "\n\n")
-    }
+    if (verbose) cat("Finished processing:", file, "\n\n")
   }
   
-  if (verbose) {
-    cat("All files processed.\n")
-  }
+  if (verbose) cat("All files processed.\n")
   
   invisible(NULL)
 }

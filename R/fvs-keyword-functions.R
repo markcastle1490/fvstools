@@ -12,8 +12,8 @@
 #' Character vector of stand identification numbers.
 #' 
 #' @param invyear
-#' Numeric vector of inventory years for each stand in standid and or standcn 
-#' arguments.
+#' Optional numeric vector of inventory years for each stand in standid and or 
+#' standcn arguments.
 #' 
 #' @param standcn
 #' Optional character vector of stand control numbers. If values are not defined 
@@ -126,7 +126,7 @@
 
 fvs_keyfile <- function(keyfile,
                         standid,
-                        invyear,
+                        invyear = NULL,
                         standcn = NULL,
                         keywords = NULL,
                         stand_keys = NULL,
@@ -174,22 +174,16 @@ fvs_keyfile <- function(keyfile,
                "extension must be .key."))
   
   #If invyear or standid are empty, stop with an error
-  if(length(invyear) <= 0 || length(standid) <= 0)
-    stop(paste("Values are required for invyear and standid."))
+  if(length(standid) <= 0)
+    stop(paste("Values are required for standid."))
   
-  #If invyear and standid are not the same length, stop with an error
-  if(length(invyear) != length(standid))
-    stop(paste("Arguments invyear and standid need to have the same length."))
+  #Fill in invyear values
+  if(is.null(invyear)) invyear = rep(0, times = length(standid))
   
-  #Do checks on standcn
+  #Fill in standcn values
   if(is.null(standcn)) standcn = standid
-  else
-  {
-    if(length(standcn) != length(standid))
-      stop("Arguments standcn and standid need to have the same length.")
-  }
   
-  #Do checks on keywords argument
+  #Do checks on keywords
   if(!is.null(keywords))
   {
     #Stop if keywords is a list or not a character vector
@@ -200,9 +194,11 @@ fvs_keyfile <- function(keyfile,
   #Fill in stand_keys if NULL
   if(is.null(stand_keys)) stand_keys = rep("", times = length(standid))
   
-  #Check length of stand_keys and type
-  if(length(stand_keys) != length(standid))
-    stop("Arguments stand_keys and standid need to have the same length.")
+  #Check if standid, standcn, invyear, and stand_keys are not equal length
+  if(unequal_vector(standid, standcn, invyear, stand_keys))
+    stop("standid, standcn, invyear, and stand_keys must all be the same length.")
+  
+  #Check on stand_keys type
   if(!is.character(stand_keys))
     stop("stand_keys argument must be a character vector.")
   
@@ -271,11 +267,14 @@ fvs_keyfile <- function(keyfile,
       writeLines(text = stand_key, con = con, sep = "\n\n")
       
       #Create INVYR keyword
-      invyr_key <- fvs_keyword(params = list("INVYEAR", inv_year),
-                               type = 1)
-      
-      #Write INVYR keywords
-      writeLines(text = invyr_key, con = con, sep = "\n\n")
+      if(inv_year > 0)
+      {
+        invyr_key <- fvs_keyword(params = list("INVYEAR", inv_year),
+                                 type = 1)
+        
+        #Write INVYR keywords
+        writeLines(text = invyr_key, con = con, sep = "\n\n")
+      }
       
       #=========================================================================
       #Determine if output DSNOUT keywords will be produced and added to keyword
@@ -996,30 +995,19 @@ null_vector = function(...)
 #' Logical TRUE or FALSE value.
 ################################################################################
 
-unequal_vector = function(...)
+unequal_vector <- function(...)
 {
-  #Initialize value that will be returned if any vectors is NULL. This starts 
-  #off as FALSE until proven otherwise.
+  #Initialize return value
   unequal_vector_ <- FALSE
   
-  #Get the vectors
+  #Store the vectors in a list
   vectors <- list(...)
   
-  #Loop through vectors and check if any are not equal to the length of the
-  #first vector.
+  #Check if any vectors are not equal to length of first vector
   if(length(vectors) > 0)
   {
-    #Get length of first vector
-    vector_length <- length(vectors[[1]])
-    
-    for(i in 1:length(vectors))
-    {
-      if(length(vectors[[i]]) != vector_length)
-      {
-        unequal_vector_ <- TRUE
-        break
-      }
-    }
+    vec_lengths <- lengths(vectors)
+    unequal_vector_ <- any(vec_lengths != vec_lengths[1])
   }
   
   return(unequal_vector_)
@@ -1042,7 +1030,9 @@ unequal_vector = function(...)
 na_vector = function(...)
 {
   # Determine if any vector contains an NA value
-  na_vector_ <- any(sapply(list(...), function(x) any(is.na(x)), USE.NAMES = FALSE))
+  na_vector_ <- any(sapply(list(...), 
+                           function(x) any(is.na(x)),
+                           USE.NAMES = FALSE))
   
   return(na_vector_)
 }
