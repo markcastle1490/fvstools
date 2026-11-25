@@ -178,10 +178,10 @@ fvs_keyfile <- function(keyfile,
     stop(paste("Values are required for standid."))
   
   #Fill in invyear values
-  if(is.null(invyear)) invyear = rep(0, times = length(standid))
+  if(is.null(invyear)) invyear <- rep(-1, times = length(standid))
   
   #Fill in standcn values
-  if(is.null(standcn)) standcn = standid
+  if(is.null(standcn)) standcn <- standid
   
   #Do checks on keywords
   if(!is.null(keywords))
@@ -192,7 +192,7 @@ fvs_keyfile <- function(keyfile,
   }
   
   #Fill in stand_keys if NULL
-  if(is.null(stand_keys)) stand_keys = rep("", times = length(standid))
+  if(is.null(stand_keys)) stand_keys <- rep("", times = length(standid))
   
   #Check if standid, standcn, invyear, and stand_keys are not equal length
   if(unequal_vector(standid, standcn, invyear, stand_keys))
@@ -266,13 +266,12 @@ fvs_keyfile <- function(keyfile,
       #Write standident and standcn keywords
       writeLines(text = stand_key, con = con, sep = "\n\n")
       
-      #Create INVYR keyword
-      if(inv_year > 0)
+      #Create INVYEAR keyword
+      if(!is.na(inv_year) && inv_year >= 0)
       {
         invyr_key <- fvs_keyword(params = list("INVYEAR", inv_year),
                                  type = 1)
         
-        #Write INVYR keywords
         writeLines(text = invyr_key, con = con, sep = "\n\n")
       }
       
