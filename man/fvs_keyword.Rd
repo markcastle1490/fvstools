@@ -7,8 +7,8 @@
 fvs_keyword(params = list(), type = 1)
 }
 \arguments{
-\item{params}{A vector or list of parameters for a single FVS keyword, or a list of
-lists/vectors when formatting multiple keywords at once.
+\item{params}{A list of parameters for a single FVS keyword, or a list of lists when
+formatting multiple keywords at once.
 
 1: List corresponds to standard FVS keyword (not in parms format). Value in
 index 1 should be name of FVS keyword. All following indices should contain
@@ -46,7 +46,7 @@ parameter set, or matching the length of params for a list of lists).
 Returns "" if params is empty.
 }
 \description{
-This function takes in a list of keyword parameters and returns
-a properly formatted keyword string. This function can accommodate standard
-keyword formatting and the Parms format.
+Formats one or more sets of parameters into FVS keyword records. Supports
+standard fixed-width keywords, Parms format keywords, Event Monitor
+functions, and freeform text records.
 }
