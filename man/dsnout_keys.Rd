@@ -2,7 +2,7 @@
 % Please edit documentation in R/fvs-keyword-functions.R
 \name{dsnout_keys}
 \alias{dsnout_keys}
-\title{Generate FVS Output Database Keywords}
+\title{dsnout_keys}
 \usage{
 dsnout_keys(dbout = "FVSOut.db")
 }

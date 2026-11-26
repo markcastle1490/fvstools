@@ -2,7 +2,7 @@
 % Please edit documentation in R/fvs-keyword-functions.R
 \name{open_keys}
 \alias{open_keys}
-\title{Generate FVS File Open and Close Keywords}
+\title{open_keys}
 \usage{
 open_keys(
   file = "FVS_Addfile.kcp",

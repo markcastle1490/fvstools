@@ -2,7 +2,7 @@
 % Please edit documentation in R/fvs-keyword-functions.R
 \name{fvs_keyfile}
 \alias{fvs_keyfile}
-\title{Generate FVS Keyword Files and Batches}
+\title{fvs_keyfile}
 \usage{
 fvs_keyfile(
   keyfile,

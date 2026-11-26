@@ -1,6 +1,6 @@
 ################################################################################
+#' fvs_keyfile
 #' @name fvs_keyfile
-#' @title Generate FVS Keyword Files and Batches
 #' @description This function creates a keyword file based on user defined set 
 #' of keywords for a set of stands IDs and inventory years.
 #' 
@@ -173,14 +173,14 @@ fvs_keyfile <- function(keyfile,
     stop(paste("Output argument does not have a valid file extension. File",
                "extension must be .key."))
   
-  #If invyear or standid are empty, stop with an error
+  #If standid has no values, stop with an error
   if(length(standid) <= 0)
     stop(paste("Values are required for standid."))
   
-  #Fill in invyear values
+  #Fill in invyear values when NULL
   if(is.null(invyear)) invyear <- rep(-1, times = length(standid))
   
-  #Fill in standcn values
+  #Fill in standcn values when NULL
   if(is.null(standcn)) standcn <- standid
   
   #Do checks on keywords
@@ -191,12 +191,16 @@ fvs_keyfile <- function(keyfile,
       stop("keywords argument must be a character vector.")
   }
   
-  #Fill in stand_keys if NULL
+  #Fill in stand_keys when NULL
   if(is.null(stand_keys)) stand_keys <- rep("", times = length(standid))
   
   #Check if standid, standcn, invyear, and stand_keys are not equal length
   if(unequal_vector(standid, standcn, invyear, stand_keys))
     stop("standid, standcn, invyear, and stand_keys must all be the same length.")
+  
+  #Check on invyear type
+  if(!is.numeric(invyear))
+    stop("invyear argument must be a numeric vector.")
   
   #Check on stand_keys type
   if(!is.character(stand_keys))
@@ -263,10 +267,13 @@ fvs_keyfile <- function(keyfile,
                          stand_cn,
                          sep = "\n")  
       
-      #Write standident and standcn keywords
+      #Write stdident and standcn keywords
       writeLines(text = stand_key, con = con, sep = "\n\n")
       
-      #Create INVYEAR keyword
+      #=========================================================================
+      #Determine if INVYEAR keyword will be added to keyword file
+      #=========================================================================
+      
       if(!is.na(inv_year) && inv_year >= 0)
       {
         invyr_key <- fvs_keyword(params = list("INVYEAR", inv_year),
@@ -276,8 +283,7 @@ fvs_keyfile <- function(keyfile,
       }
       
       #=========================================================================
-      #Determine if output DSNOUT keywords will be produced and added to keyword
-      #file
+      #Determine if output DSNOUT keywords will be added to keyword file
       #=========================================================================
       
       if(!is.null(dbout))
@@ -299,8 +305,7 @@ fvs_keyfile <- function(keyfile,
       }
       
       #=========================================================================
-      #Determine if input database keywords will be produced and added to keyword
-      #file
+      #Determine if input database keywords will be added to keyword file
       #=========================================================================
       
       if(!is.null(dbin))
@@ -314,7 +319,7 @@ fvs_keyfile <- function(keyfile,
       }
       
       #=========================================================================
-      #Determine if timing keywords are produced and added to keyword file
+      #Determine if timing keywords will be added to keyword file
       #=========================================================================
       
       if(!is.null(start_year) && !is.null(end_year))
@@ -330,7 +335,7 @@ fvs_keyfile <- function(keyfile,
       }
       
       #=========================================================================
-      #Check if delotab keywords should be added
+      #Determine if delotab keywords will be added to keyword file
       #=========================================================================
       
       if(length(delotab) > 0)
@@ -371,8 +376,8 @@ fvs_keyfile <- function(keyfile,
 }
 
 ################################################################################
+#' fvs_kcpfile
 #' @name fvs_kcpfile
-#' @title Generate FVS Keyword Component File
 #' @description This function creates a kcp file based on user defined set of 
 #' #keywords.
 #' 
@@ -439,16 +444,16 @@ fvs_kcpfile <- function(kcpfile,
 }
 
 ################################################################################
+#' fvs_keyword
 #' @name fvs_keyword
-#' @title Format FVS Keyword and Event Monitor Strings
-#' @description This function takes in a list of keyword parameters and returns
-#' a properly formatted keyword string. This function can accommodate standard 
-#' keyword formatting and the Parms format.
+#' @description 
+#' Formats one or more sets of parameters into FVS keyword records. Supports 
+#' standard fixed-width keywords, Parms format keywords, Event Monitor 
+#' functions, and freeform text records.
 #' 
 #' @param params
-#' List containing FVS keyword or event monitor function parameters. The list 
-#' should be structured in one of the following manners and align with the 
-#' options for the type argument.
+#' A vector or list of parameters for a single FVS keyword, or a list of
+#' lists/vectors when formatting multiple keywords at once.
 #' 
 #' 1: List corresponds to standard FVS keyword (not in parms format). Value in 
 #' index 1 should be name of FVS keyword. All following indices should contain 
@@ -468,7 +473,9 @@ fvs_kcpfile <- function(kcpfile,
 #' additional formatting.
 #' 
 #' @param type
-#' Type of keyword to be returned. By default this argument is set to 1.
+#' An integer (or integer vector) specifying the keyword formatting rule (1,
+#' 2, 3, or 4). Must be length 1 or the same length as params when
+#' passing multiple parameter sets. Invalid values default to 1.
 #' 
 #' 1 = Standard
 #' 
@@ -480,93 +487,118 @@ fvs_kcpfile <- function(kcpfile,
 #' monitor function call.
 #' 
 #' @return
-#' Character string corresponding to properly formatted keyword or event monitor 
-#' function.
+#' A character vector of formatted FVS keyword strings (length 1 for a single
+#' parameter set, or matching the length of params for a list of lists).
+#' Returns "" if params is empty.
+#' 
 #' @export
 ################################################################################
 
 fvs_keyword <- function(params = list(),
                         type = 1)
 {
-  keyword <- ""
+  # Return empty string if params is empty
+  if (length(params) <= 0) return("")
   
-  #if no values are in params, return keyword
-  if(length(params) <= 0) return(keyword)
-  
-  #Check for valid type
-  if(!type %in% c(1, 2, 3, 4)) type <- 1
-  
-  #Drop NAs and convert to character vector
-  flat_params <- unlist(params)
-  char_params <- as.character(flat_params[!is.na(flat_params)])
-
-  #Enforce length limit if type isn't 4
-  if (type != 4) {
-  char_params <- substring(char_params, 1, 10)
+  # Wrap a single parameter set in a list so all inputs are processed uniformly
+  if (!is.list(params) || !any(vapply(params, is.list, logical(1)))) {
+    params <- list(params)
   }
-
-  #Clean up whitespace
-  char_params <- trimws(char_params)
   
-  #If length of char_params is still 0, return
-  if(length(char_params) <= 0) return(keyword)
+  # Reject lists nested more than two levels deep
+  if (any(vapply(params, function(p) is.list(p) && 
+                 any(vapply(p, is.list, logical(1))), logical(1)))) {
+    stop("params cannot be nested more than two levels deep.")
+  }
   
-  #Handle standard keyword formatting
-  if(type == 1)
-  {
+  n <- length(params)
+  
+  # Validate type values up front (default invalid values to 1)
+  if (length(type) <= 0) type <- 1
+  type[!type %in% c(1, 2, 3, 4)] <- 1
+  
+  # Stop if multiple types are supplied and don't match the number of parameter sets
+  if (length(type) > 1 && length(type) != n) {
+    stop("type must be length 1 or the same length as params.")
+  }
+  
+  # Recycle a single type across all parameter sets
+  if (length(type) == 1L) {
+    type <- rep.int(type, n)
+  }
+  
+  # Format each parameter set into a character vector
+  keywords <- vapply(seq_len(n), function(i) {
     
-    #Combine keyword records
-    keyword <- paste0(format(char_params,
-                             width = 10,
-                             justify = "left"),
-                      collapse = "")
-  }
-  
-  #Handle Parms keyword formatting
-  else if (type == 2 && length(char_params) >= 3)
-  {
-    #Create the Parm() component of keyword
-    parms <- paste0("Parms",
-                    "(",
-                    paste0(char_params[3:length(char_params)],
-                           collapse = ","),
-                    ")")
+    keyword <- ""
+    p <- params[[i]]
+    t <- type[i]
     
-    #Create the keyword
-    keyword <- paste0(format(char_params[1], width = 10, justify = "left"),
-                      format(char_params[2], width = 10, justify = "left"),
-                      parms)
-  }
-  
-  #Handle event monitor function
-  else if(type == 3 && length(char_params) >= 3)
-  {
-    #Create string with variable and function call name
-    event_var <- paste0(char_params[1], "=", char_params[2])
+    # If no values are in p, return empty keyword
+    if (length(p) <= 0) return(keyword)
     
-    #Create function arguments with parentheses
-    function_args <- paste0("(",
-                            paste0(char_params[3:length(char_params)],
-                                   collapse = ","),
-                            ")")
+    # Drop NAs and convert to character vector
+    flat_params <- unlist(p)
+    char_params <- as.character(flat_params[!is.na(flat_params)])
     
-    #Create the keyword (function call here)
-    keyword <- paste0(event_var, function_args)
-  }
+    # Enforce length limit if type isn't 4
+    if (t != 4) {
+      char_params <- substring(char_params, 1, 10)
+    }
+    
+    # Clean up whitespace
+    char_params <- trimws(char_params)
+    
+    # If length of char_params is still 0, return
+    if (length(char_params) <= 0) return(keyword)
+    
+    # Handle standard keyword formatting
+    if (t == 1) {
+      keyword <- paste0(sprintf("%-10s", char_params),
+                        collapse = "")
+    }
+    
+    # Handle Parms keyword formatting
+    else if (t == 2 && length(char_params) >= 3) {
+      parms <- paste0("Parms",
+                      "(",
+                      paste0(char_params[3:length(char_params)],
+                             collapse = ","),
+                      ")")
+      
+      keyword <- paste0(sprintf("%-10s", char_params[1]),
+                        sprintf("%-10s", char_params[2]),
+                        parms)
+    }
+    
+    # Handle event monitor function
+    else if (t == 3 && length(char_params) >= 3) {
+      event_var <- paste0(char_params[1], "=", char_params[2])
+      
+      function_args <- paste0("(",
+                              paste0(char_params[3:length(char_params)],
+                                     collapse = ","),
+                              ")")
+      
+      keyword <- paste0(event_var, function_args)
+    }
+    
+    # Handle freeform option
+    else if (t == 4) {
+      keyword <- paste(char_params, collapse = " ")
+    }
+    
+    return(keyword)
+    
+  }, character(1))
   
-  #Handle freeform option
-  else if(type == 4)
-  {
-    #Paste char_params separated by space and return
-    keyword <- paste(char_params, collapse = " ")
-  }
-  
-  return(keyword)
+  return(keywords)
 }
 
+
 ################################################################################
+#' time_keys
 #' @name time_keys
-#' @title Generate FVS Simulation Time Control Keywords
 #' @description This function creates a set of keywords for controlling the 
 #' length of a FVS simulation for a given inventory year, common start year, 
 #' common end year, default cycle length, and optional cycle_at keywords.
@@ -702,8 +734,8 @@ time_keys <- function(invyear = NULL,
 }
 
 ################################################################################
+#' dsnin_keys
 #' @name dsnin_keys
-#' @title Generate FVS Input Database Keywords
 #' @description This function creates a set of keywords for reading in data from
 #' an input FVS database.
 #' 
@@ -782,8 +814,8 @@ dsnin_keys <- function(dbin = 'FVS_Data.db',
 }
 
 ################################################################################
+#' dsnout_keys
 #' @name dsnout_keys
-#' @title Generate FVS Output Database Keywords
 #' @description This function creates a set of keywords for setting an FVS 
 #' output database.
 #' 
@@ -810,8 +842,8 @@ dsnout_keys <- function(dbout = 'FVSOut.db')
 }
 
 ################################################################################
+#' delotab_keys
 #' @name delotab_keys
-#' @title Generate FVS DELOTAB Output Suppression Keywords
 #' @description This function creates a set of delotab keywords based on input 
 #' numeric vector.
 #' 
@@ -856,8 +888,8 @@ delotab_keys <- function(delotab = NULL)
 }
 
 ################################################################################
+#' open_keys
 #' @name open_keys
-#' @title Generate FVS File Open and Close Keywords
 #' @description This function creates a set of keywords for opening and closing
 #' an FVS addfile or kcp file.
 #' 
@@ -936,22 +968,22 @@ open_keys <- function(file = "FVS_Addfile.kcp",
 #' @name valid_vectors
 #' 
 #' @description
-#' This function takes a set of vectors and checks if any are NULL or if they 
-#' have unequal lengths. 
+#' This function takes a set of vectors and checks if any are NULL, have 
+#' unequal lengths, or contain NA values.
 #' 
 #' @param ... 
 #' A set of vectors to be evaluated.
 #' 
 #' @return 
-#' A logical value: `TRUE` if any vector is NULL or lengths are unequal; 
-#' `FALSE` otherwise.
+#' A logical value: `FALSE` if any vector is NULL, has unequal lengths, or 
+#' contains NA values; `TRUE` otherwise.
+#' 
+#' @noRd
 ################################################################################
 
-valid_vectors = function(...)
-{
-  if(null_vector(...)) return(FALSE)
-  if(unequal_vector(...)) return(FALSE)
-  return(TRUE)
+valid_vectors <- function(...) {
+  
+  return(!(null_vector(...) || unequal_vector(...) || na_vector(...)))
 }
 
 ################################################################################
@@ -966,6 +998,8 @@ valid_vectors = function(...)
 #' 
 #' @return 
 #' A logical value: `TRUE` if any vector is NULL, `FALSE` otherwise.
+#' 
+#' @noRd
 ################################################################################
 
 null_vector = function(...)
@@ -992,6 +1026,8 @@ null_vector = function(...)
 #
 #' @return
 #' Logical TRUE or FALSE value.
+#' 
+#' @noRd
 ################################################################################
 
 unequal_vector <- function(...)
@@ -1024,6 +1060,8 @@ unequal_vector <- function(...)
 #' 
 #' @return 
 #' A logical value: `TRUE` if any vector contains an NA, `FALSE` otherwise.
+#' 
+#' @noRd
 ################################################################################
 
 na_vector = function(...)

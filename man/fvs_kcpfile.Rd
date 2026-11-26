@@ -2,7 +2,7 @@
 % Please edit documentation in R/fvs-keyword-functions.R
 \name{fvs_kcpfile}
 \alias{fvs_kcpfile}
-\title{Generate FVS Keyword Component File}
+\title{fvs_kcpfile}
 \usage{
 fvs_kcpfile(kcpfile, keywords = NULL)
 }

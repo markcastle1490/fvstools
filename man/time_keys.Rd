@@ -2,7 +2,7 @@
 % Please edit documentation in R/fvs-keyword-functions.R
 \name{time_keys}
 \alias{time_keys}
-\title{Generate FVS Simulation Time Control Keywords}
+\title{time_keys}
 \usage{
 time_keys(
   invyear = NULL,

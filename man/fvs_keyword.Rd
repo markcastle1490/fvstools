@@ -2,14 +2,13 @@
 % Please edit documentation in R/fvs-keyword-functions.R
 \name{fvs_keyword}
 \alias{fvs_keyword}
-\title{Format FVS Keyword and Event Monitor Strings}
+\title{fvs_keyword}
 \usage{
 fvs_keyword(params = list(), type = 1)
 }
 \arguments{
-\item{params}{List containing FVS keyword or event monitor function parameters. The list
-should be structured in one of the following manners and align with the
-options for the type argument.
+\item{params}{A vector or list of parameters for a single FVS keyword, or a list of
+lists/vectors when formatting multiple keywords at once.
 
 1: List corresponds to standard FVS keyword (not in parms format). Value in
 index 1 should be name of FVS keyword. All following indices should contain
@@ -28,7 +27,9 @@ string. All indices in list contain values that will be concatenated into a
 string where each value is separated by a space and returned without any
 additional formatting.}
 
-\item{type}{Type of keyword to be returned. By default this argument is set to 1.
+\item{type}{An integer (or integer vector) specifying the keyword formatting rule (1,
+2, 3, or 4). Must be length 1 or the same length as params when
+passing multiple parameter sets. Invalid values default to 1.
 
 1 = Standard
 
@@ -40,8 +41,9 @@ additional formatting.}
 monitor function call.}
 }
 \value{
-Character string corresponding to properly formatted keyword or event monitor
-function.
+A character vector of formatted FVS keyword strings (length 1 for a single
+parameter set, or matching the length of params for a list of lists).
+Returns "" if params is empty.
 }
 \description{
 This function takes in a list of keyword parameters and returns

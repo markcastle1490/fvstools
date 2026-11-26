@@ -2,7 +2,7 @@
 % Please edit documentation in R/fvs-keyword-functions.R
 \name{delotab_keys}
 \alias{delotab_keys}
-\title{Generate FVS DELOTAB Output Suppression Keywords}
+\title{delotab_keys}
 \usage{
 delotab_keys(delotab = NULL)
 }
