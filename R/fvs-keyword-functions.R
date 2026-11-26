@@ -275,14 +275,10 @@ fvs_keyfile <- function(keyfile,
       key_path <- file.path(keydir, key_name_)
     }
     
-    #If key_path exists already,  delete it
-    if(file.exists(key_path)) unlink(key_path)
+    # Open file connection
+    con <- file(description = key_path, open = "wt")
     
-    #Open file connection
-    con <- file(description = key_path, open = "a")
-    on.exit(try(if(isOpen(con)) close(con = con), silent = TRUE))
-    
-    #Create dsnout_str once per batch
+    # Create dsnout_str once per batch
     dsnout_str <- if (!is.null(dbout)) {
       dbout_ <- dbout
       if (create_batch && unique_dbout) {
@@ -294,34 +290,37 @@ fvs_keyfile <- function(keyfile,
       paste(dsnout_keys(dbout = dbout_), collapse = "\n\n")
     } else NULL
     
-    #Start loop across stands
-    for (stand in stands) {
-      stand_id <- standid[[stand_count]]
-      stand_cn <- standcn[[stand_count]]
-      s_key    <- stand_keys[[stand_count]]
-      idx      <- inv_map[[stand_count]]
+    # Start loop across stands
+    tryCatch({
+      for (stand in stands) {
+        stand_id <- standid[[stand_count]]
+        stand_cn <- standcn[[stand_count]]
+        s_key    <- stand_keys[[stand_count]]
+        idx      <- inv_map[[stand_count]]
+        
+        stand_block <- c(
+          paste("STDIDENT", stand_id, "STANDCN", stand_cn, sep = "\n"),
+          u_inv_str[[idx]],
+          dsnout_str,
+          dsnin_str,
+          u_time_str[[idx]],
+          delo_str,
+          keywords_str,
+          if (!is.na(s_key) && s_key != "") s_key,
+          "PROCESS"
+        )
+        
+        writeLines(text = stand_block, con = con, sep = "\n\n")
+        stand_count <- stand_count + 1L
+        #End of stand loop
+      }
       
-      stand_block <- c(
-        paste("STDIDENT", stand_id, "STANDCN", stand_cn, sep = "\n"),
-        u_inv_str[[idx]],
-        dsnout_str,
-        dsnin_str,
-        u_time_str[[idx]],
-        delo_str,
-        keywords_str,
-        if (!is.na(s_key) && s_key != "") s_key,
-        "PROCESS"
-      )
-      
-      writeLines(text = stand_block, con = con, sep = "\n\n")
-      stand_count <- stand_count + 1L
-      #End of stand loop
-    }
-    
-    # Add STOP keyword and close file connection
-    writeLines(text = "STOP", con = con, sep = "\n\n")
-    close(con = con)
-    # End of batch loop
+      # Add STOP keyword before closing connection
+      writeLines(text = "STOP", con = con, sep = "\n\n")
+    }, finally = {
+      if (isOpen(con)) close(con = con)
+    })
+    #End of batch loop
   }
   invisible()
 }
@@ -350,29 +349,29 @@ fvs_kcpfile <- function(kcpfile,
                         keywords = NULL)
 {
   
-  #If kcpfile exists already,  delete it
-  if(file.exists(kcpfile)) unlink(kcpfile)
+  # Switch \ to / in kcpfile
+  kcpfile <- chartr("\\", "/", kcpfile)
   
-  #Extract path to output by extract all characters before the last / in output.
+  #Extract path and extension
   keydir <- dirname(kcpfile)
+  key_ext <- tools::file_ext(kcpfile)
   
-  #Test existence of output path and if it does not exist report error.
-  if (!(file.exists(keydir))){
+  # Validate output directory
+  if (keydir == ".") {
+    keydir <- getwd()
+  } else if (!file.exists(keydir)) {
     stop(paste("Path to output:", keydir, "was not found.",
                "Make sure directory path to output is spelled correctly."))
   }
-  
-  #Extract file extension for output argument.
-  key_ext <- tools::file_ext(kcpfile)
-  
-  #Test if output file extension is valid (.key).
+
+  #Validate .kcp extension
   if(!key_ext %in% c("kcp"))
   {
     stop(paste("Output argument does not have a valid file extension. File",
                "extension must be .kcp."))
   }
   
-  #Do checks on keywords argument if not NULL
+  # Validate keywords argument if not NULL
   if(!is.null(keywords))
   {
     #Stop if keywords is a list or not a character vector
@@ -381,7 +380,7 @@ fvs_kcpfile <- function(kcpfile,
   }
   
   #Open file connection
-  con <- file(description = kcpfile, open = "a")
+  con <- file(description = kcpfile, open = "wt")
   on.exit(try(if(isOpen(con)) close(con = con), silent = TRUE))
     
   #===========================================================================
@@ -391,6 +390,7 @@ fvs_kcpfile <- function(kcpfile,
   if(length(keywords) > 0)
     writeLines(text = keywords, con = con, sep = "\n\n")
   
+  close(con = con)
   invisible()
 }
 
@@ -844,11 +844,12 @@ delotab_keys <- function(delotab = NULL)
 #' an FVS addfile or kcp file.
 #' 
 #' @param file
-#' Character string corresponding to a file path to a addfile (.kcp) file.
+#' Vector of character strings corresponding to a file path to a addfile (.kcp) 
+#' file.
 #' 
 #' @param ref_num
-#' Integer file for reference number to input file. This value should be greater 
-#' than 50 (this is based on default value from FVS-GUI).
+#' Vector of integer file reference numbers. Values should be greater than 50
+#' (this is based on default value from FVS-GUI).
 #' 
 #' @param blanks
 #' Integer value pertaining to how blank values are treated in numeric fields 
@@ -884,30 +885,35 @@ open_keys <- function(file = "FVS_Addfile.kcp",
                       record_length = 80)
   
 {
-  #Capture bad ref_num
-  if(ref_num < 50) ref_num <- 50
+  #Validate ref_num
+  ref_num <- ifelse(is.na(ref_num) | ref_num < 50, 50, ref_num)
   
-  #Capture bad blanks value
-  if(blanks < 0) blanks <- 0
+  #Validate blanks, status and record_length
+  blanks <- blanks[1L]
+  if (is.na(blanks) || blanks < 0) blanks <- 0
   
-  #Capture bad status value
-  if(!status %in% c(0, 1, 2)) status <- 0
+  status <- status[1L]
+  if (is.na(status) || !status %in% c(0, 1, 2)) status <- 0
   
-  #Capture bad record_length value
-  if(record_length < 80 || record_length > 150) record_length <- 80
+  record_length <- record_length[1L]
+  if (is.na(record_length) || record_length < 80 || record_length > 150) {
+    record_length <- 80
+  }
   
   #Build the keyword sequence
-  open_key <- paste(fvs_keyword(params = list("OPEN", 
-                                             ref_num, 
-                                             blanks,
-                                             status,
-                                             record_length, 0)),
-                   file,
-                   fvs_keyword(params = list("ADDFILE", 
-                                             ref_num)),
-                   fvs_keyword(params = list("CLOSE", 
-                                             ref_num)),
-                   sep = "\n")
+  open_key <- mapply(
+    function(f, r) {
+      paste(
+        fvs_keyword(params = list("OPEN", r, blanks, status, record_length, 0)),
+        f,
+        fvs_keyword(params = list("ADDFILE", r)),
+        fvs_keyword(params = list("CLOSE", r)),
+        sep = "\n"
+      )
+    },
+    f = file,
+    r = ref_num,
+    USE.NAMES = FALSE)
   
   return(open_key)
 }

@@ -37,17 +37,9 @@ run_key = function(dll_path = "C:/FVS/FVSSoftware/FVSbin",
   on.exit(expr = setwd(orig_dir),
           add = TRUE)
   
-  #Change \\ to / in dll_path argument
+  #Change \\ to /
   dll_path <- chartr("\\", "/", dll_path)
-  
-  #Change \\ to / in keyfile argument
   keyfile <- chartr("\\", "/", keyfile)
-  
-  #Make var_code lowercase
-  var_code <- tolower(var_code)
-  
-  #Get file ext on keyfile
-  ext <- tools::file_ext(keyfile)
   
   #Check for existence of dll_path
   if (!(file.exists(dll_path))){
@@ -62,23 +54,19 @@ run_key = function(dll_path = "C:/FVS/FVSSoftware/FVSbin",
   }
   
   #Check file extension
-  if (ext != "key"){
+  if (tools::file_ext(keyfile) != "key"){
     stop(paste("Invalid file extension specified in keyfile argument."))
   }
   
-  #Check for valid variant
-  # if (! toupper(var_code) %in% fvs_get_variants()){
-  #   stop(paste("Invalid FVS variant specified in var_code."))
-  # }
+  #Build DLL name
+  var_code <- paste0("FVS", sub("^fvs", "", tolower(var_code)))
   
-  #Create dll name
-  var_code <- paste0("FVS", var_code)
-  
-  #Grab the the directory where the keyword file is stored
+  # Extract keyword directory and filename
   keydir <- dirname(keyfile)
-  
-  #Get the name of the keyword file
   keyfile_ <- basename(keyfile)
+  
+  #Remove any leftover FVS DLL before loading variant
+  unload_fvs()
   
   #Set working directory for the simulation
   setwd(keydir)
@@ -93,29 +81,43 @@ run_key = function(dll_path = "C:/FVS/FVSSoftware/FVSbin",
   
   #Load variant dll and specify directory path to dll in bin folder
   rFVS::fvsLoad(var_code, bin = dll_path)
-  
-  #Unload the dll on exit
-  on.exit(expr = {
-    
-    #Code used in fvsLoad rFVS function.
-    if (exists(".FVSLOADEDLIBRARY", envir=.GlobalEnv)) 
-    {
-      loaded <- get(".FVSLOADEDLIBRARY", envir=.GlobalEnv)$ldf
-      dyn.unload(loaded)
-      remove(".FVSLOADEDLIBRARY",envir=.GlobalEnv)
-    }},
-    add = TRUE)
+  on.exit(expr = unload_fvs(), add = TRUE, after = FALSE)
   
   #Set keyword file to command line
-  rFVS::fvsSetCmdLine(paste0("--keywordfile=", keyfile_))
-  
-  #Initialize return code
-  retcode <- 0
+  cmd_out <- rFVS::fvsSetCmdLine(paste0("--keywordfile=", keyfile_))
+  if (is.list(cmd_out) && length(cmd_out) >= 3L && cmd_out[[3L]] != 0L) {
+    stop(paste("fvsSetCmdLine failed with return code:", cmd_out[[3L]]))
+  }
   
   #Keep running FVS until a return code other than 0, is returned.
-  while(retcode == 0) retcode <- rFVS::fvsRun()
+  repeat {
+    retcode <- rFVS::fvsRun()
+    if (retcode != 0) break
+  }
   
   invisible(retcode)
+}
+
+################################################################################
+#' Unload Active FVS Variant Library
+#'
+#' Checks .GlobalEnv for an active .FVSLOADEDLIBRARY object created by
+#' rFVS::fvsLoad(), unloads the associated dynamic library via 
+#' base::dyn.unload(), and removes .FVSLOADEDLIBRARY from .GlobalEnv.
+#'
+#' @return Invisibly returns `TRUE` if an FVS library was unloaded, or `FALSE`
+#'   if no active FVS library was found in `.GlobalEnv`.
+#'   
+#' @noRd
+################################################################################
+
+#Function for unloading dll
+unload_fvs <- function() {
+  if (exists(".FVSLOADEDLIBRARY", envir = .GlobalEnv)) {
+    loaded <- get(".FVSLOADEDLIBRARY", envir = .GlobalEnv)$ldf
+    try(dyn.unload(loaded), silent = TRUE)
+    remove(".FVSLOADEDLIBRARY", envir = .GlobalEnv)
+  }
 }
 
 ################################################################################
@@ -158,51 +160,29 @@ run_key_rscript = function(script_path = NULL,
                            verbose = FALSE)
 {
   
-  #Change \\ to / in dll_path argument
+  #Change \\ to / and lowercase var_code
   dll_path <- chartr("\\", "/", dll_path)
-  
-  #Change \\ to / in keyfile argument
   keyfile <- chartr("\\", "/", keyfile)
-  
-  #Make var_code lowercase
   var_code <- tolower(var_code)
   
-  #Get file ext on keyfile
-  ext <- tools::file_ext(keyfile)
-  
-  #Generate script_path if NULL
-  if(is.null(script_path))
-    script_path <- gsub(".key$", ".R", keyfile)
-    
-  #If script_path exists already,  delete it
-  if(file.exists(script_path)) unlink(script_path)
-  
-  #Open file connection
-  con <- file(description = script_path, open = "a")
-  on.exit(try(if(isOpen(con)) close(con = con), silent = TRUE))
+  #Generate script_path
+  if (is.null(script_path)) {
+    script_path <- sub("\\.key$", ".R", keyfile, ignore.case = TRUE)
+  } else {
+    script_path <- chartr("\\", "/", script_path)
+  }
   
   #Write the code in R script
-  writeLines(text = "library(fvstools)", con = con, sep = "\n\n")
+  script_lines <- c(
+    "library(fvstools)",
+    "",
+    sprintf("run_key(dll_path = '%s',", dll_path),
+    sprintf("        var_code = '%s',", var_code),
+    sprintf("        keyfile = '%s',",  keyfile),
+    sprintf("        verbose = %s)",    verbose))
   
-  writeLines(text = paste("run_key(dll_path =", 
-                          paste0("'", dll_path, "'", ",")),
-             con = con,
-             sep ="\n")
-  
-  writeLines(paste("var_code =", paste0("'", var_code, "'", ",")),
-             con = con,
-             sep = "\n")
-  
-  writeLines(paste("keyfile =", paste0("'", keyfile, "'", ",")),
-             con = con,
-             sep = "\n")
-  
-  writeLines(paste("verbose = ", paste0(verbose, ")")),
-             con = con,
-             sep = "\n")
-  
-  #Close connection
-  close(con = con)
+  #Write and close connection
+  writeLines(text = script_lines, con = script_path)
   
   invisible()
 }
