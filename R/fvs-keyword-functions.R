@@ -452,8 +452,8 @@ fvs_kcpfile <- function(kcpfile,
 #' functions, and freeform text records.
 #' 
 #' @param params
-#' A vector or list of parameters for a single FVS keyword, or a list of
-#' lists/vectors when formatting multiple keywords at once.
+#' A list of parameters for a single FVS keyword, or a list of lists when 
+#' formatting multiple keywords at once.
 #' 
 #' 1: List corresponds to standard FVS keyword (not in parms format). Value in 
 #' index 1 should be name of FVS keyword. All following indices should contain 
@@ -506,8 +506,7 @@ fvs_keyword <- function(params = list(),
   }
   
   # Reject lists nested more than two levels deep
-  if (any(vapply(params, function(p) is.list(p) && 
-                 any(vapply(p, is.list, logical(1))), logical(1)))) {
+  if (any(vapply(unlist(params, recursive = FALSE), is.list, logical(1)))) {
     stop("params cannot be nested more than two levels deep.")
   }
   
