@@ -1,6 +1,4 @@
 ################################################################################
-#plot-variable-testing.R
-#
 #This script is used to test the functions from plot-variables.R. Output from
 #the functions in plot-variables.R are compared against event monitor output
 #from plot-variables-testing.kcp.

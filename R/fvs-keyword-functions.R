@@ -808,30 +808,19 @@ dsnout_keys <- function(dbout = 'FVSOut.db')
 #'@export
 delotab_keys <- function(delotab = NULL)
 {
-  if(is.null(delotab)) return("")
-  
-  #Create empty character vector to store delotab keywords
-  delo_vector <- vector(mode = "character",
-                        length = length(delotab))
-  delo_insert <- 1
-  
-  for(delo in delotab)
-  {
-    #Skip if delotab is not a value from 1-4
-    if(!delo %in% 1:4) next
-    
-    #Create DELOTAB keyword and append
-    delokey <- fvs_keyword(list("DELOTAB", delo),
-                          type = 1)
-    
-    delo_vector[[delo_insert]] <- delokey
-    delo_insert <- delo_insert + 1
-  }
-
-  delo_vector <- delo_vector[delo_vector != ""]
+  delokeys <- ""
   
   #Create DELOTAB keys
-  keys <- paste(delo_vector,
+  if(length(delotab) > 0)
+  {
+    delotab <- ifelse(delotab < 1 | delotab > 4, 1, delotab)
+    delokeys <- vapply(seq_along(delotab), function(i) {
+        delokey <- fvs_keyword(list("DELOTAB", delotab[i]), type = 1)
+    }, character(1))
+  }
+  
+  #Concatenate DELOTAB keys
+  keys <- paste(delokeys,
                 collapse = "\n")
   
   return(keys)

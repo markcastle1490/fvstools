@@ -13,10 +13,11 @@ open_keys(
 )
 }
 \arguments{
-\item{file}{Character string corresponding to a file path to a addfile (.kcp) file.}
+\item{file}{Vector of character strings corresponding to a file path to a addfile (.kcp)
+file.}
 
-\item{ref_num}{Integer file for reference number to input file. This value should be greater
-than 50 (this is based on default value from FVS-GUI).}
+\item{ref_num}{Vector of integer file reference numbers. Values should be greater than 50
+(this is based on default value from FVS-GUI).}
 
 \item{blanks}{Integer value pertaining to how blank values are treated in numeric fields
 from contents of file that is opened (OPEN keyword).
