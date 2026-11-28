@@ -808,12 +808,15 @@ dsnout_keys <- function(dbout = 'FVSOut.db')
 #'@export
 delotab_keys <- function(delotab = NULL)
 {
+  
   delokeys <- ""
+  
+  #Keep only valid DELOTAB values
+  delotab <- delotab[delotab %in% 1:4]
   
   #Create DELOTAB keys
   if(length(delotab) > 0)
   {
-    delotab <- ifelse(delotab < 1 | delotab > 4, 1, delotab)
     delokeys <- vapply(seq_along(delotab), function(i) {
         delokey <- fvs_keyword(list("DELOTAB", delotab[i]), type = 1)
     }, character(1))
